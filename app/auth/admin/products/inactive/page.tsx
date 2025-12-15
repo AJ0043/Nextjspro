@@ -114,7 +114,7 @@ export default function InactiveProductsPage() {
   ----------------------------- */
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-serif mb-6 text-red-700">
+      <h1 className="text-3xl font-serif mb-6 text-white border rounded w-full p-2 bg-teal-800">
         Inactive Products
       </h1>
 

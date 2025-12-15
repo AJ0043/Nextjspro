@@ -151,19 +151,23 @@ export default function ShowProductPage() {
   };
 
   /* -----------------------------
-     Soft Delete Product
-  ----------------------------- */
-  const handleDelete = async (id: string) => {
-    if (!confirm("Do you want to delete this product?")) return;
-    try {
-      const res = await axios.delete(`/api/products/${id}`);
-      if (res.data.success) {
-        setProducts((prev) => prev.filter((p) => p._id !== id));
-      }
-    } catch (err) {
-      console.error(err);
+   Soft Delete Product
+----------------------------- */
+const handleDelete = async (id: string) => {
+  if (!confirm("Do you want to move this product to Recycle Bin?")) return;
+
+  try {
+    const res = await axios.delete(`/api/products/soft-delete/${id}`);
+
+    if (res.data.success) {
+      // remove from active list
+      setProducts((prev) => prev.filter((p) => p._id !== id));
     }
-  };
+  } catch (err) {
+    console.error("SOFT DELETE ERROR:", err);
+  }
+};
+
 
   /* -----------------------------
      Table Pagination & Filters
