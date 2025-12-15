@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/databaseConnection";
 import Product from "@/models/product.model";
 
+/* -----------------------------
+   Slug Generator
+----------------------------- */
 function generateSlug(text: string) {
   return text
     .toLowerCase()
@@ -10,56 +13,91 @@ function generateSlug(text: string) {
     .replace(/\s+/g, "-");
 }
 
+/* -----------------------------
+   GET → Fetch All Products
+----------------------------- */
 export async function GET() {
-  await connect();
-  const products = await Product.find()
-    .populate("category")
-    .sort({ createdAt: -1 })
-    .lean();
+  try {
+    await connect();
 
-  return NextResponse.json({ success: true, products });
+    const products = await Product.find()
+      .populate("category")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch products" },
+      { status: 500 }
+    );
+  }
 }
 
+/* -----------------------------
+   POST → Add Product (FormData)
+----------------------------- */
 export async function POST(req: NextRequest) {
   try {
     await connect();
 
-    // form-data
-    const form = await req.formData();
+    // ✅ Read FormData
+    const formData = await req.formData();
 
-    const title = (form.get("title") as string) ?? "";
-    const slugInput = (form.get("slug") as string) ?? "";
-    const price = Number(form.get("price"));
-    const discount = Number(form.get("discount") || 0);
-    const description = (form.get("description") as string) ?? "";
-    const category = (form.get("category") as string) ?? "";
-    const stock = Number(form.get("stock") || 0);
+    const title = formData.get("title") as string;
+    const slugInput = formData.get("slug") as string;
+    const price = Number(formData.get("price"));
+    const discount = Number(formData.get("discount") || 0);
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const stock = Number(formData.get("stock") || 0);
 
-    const imageFile = form.get("images") as unknown as File;
+    const imageFiles = formData.getAll("images") as File[];
 
-    if (!imageFile) {
-      return NextResponse.json({
-        success: false,
-        error: "Image is required",
-      });
+    // ✅ Validation
+    if (!title || !price || !category || imageFiles.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Required fields or images missing",
+        },
+        { status: 400 }
+      );
     }
 
-    // convert to base64
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
-    const base64Image = `data:${imageFile.type};base64,${buffer.toString("base64")}`;
+    // ✅ Convert images to base64 (or later Cloudinary)
+    const images = await Promise.all(
+      imageFiles.map(async (file) => {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        return {
+          url: `data:${file.type};base64,${buffer.toString("base64")}`,
+          public_id: `${Date.now()}-${file.name}`,
+        };
+      })
+    );
 
-    // unique slug
-    let slug = slugInput ? generateSlug(slugInput) : generateSlug(title);
-    let uniqueSlug = slug;
+    // ✅ Unique slug
+    let baseSlug = slugInput
+      ? generateSlug(slugInput)
+      : generateSlug(title);
+
+    let uniqueSlug = baseSlug;
     let counter = 1;
+
     while (await Product.findOne({ slug: uniqueSlug })) {
-      uniqueSlug = `${slug}-${counter}`;
-      counter++;
+      uniqueSlug = `${baseSlug}-${counter++}`;
     }
 
-    const finalPrice = Math.round(price - (price * discount) / 100);
+    // ✅ Final price
+    const finalPrice = Math.round(
+      price - (price * discount) / 100
+    );
 
-    // CREATE PRODUCT
+    // ✅ Create product
     const product = await Product.create({
       title,
       slug: uniqueSlug,
@@ -69,25 +107,23 @@ export async function POST(req: NextRequest) {
       discount,
       finalPrice,
       stock,
-      images: [
-        {
-          url: base64Image,
-          public_id:
-            imageFile.name || `${uniqueSlug}-${Date.now().toString()}`,
-        },
-      ],
+      images,
       status: "active",
     });
 
     return NextResponse.json({
       success: true,
+      message: "Product added successfully",
       product,
     });
-  } catch (err) {
-    console.log("ERR PRODUCT ADD:", err);
-    return NextResponse.json({
-      success: false,
-      error: "Failed to add product",
-    });
+  } catch (error) {
+    console.error("ADD PRODUCT ERROR:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Product add failed",
+      },
+      { status: 500 }
+    );
   }
 }

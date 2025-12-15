@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, FormEvent, useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 interface Category {
@@ -31,6 +31,8 @@ export default function AdminProducts() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -48,10 +50,10 @@ export default function AdminProducts() {
         const catRes = await axios.get("/api/category");
         setCategories(catRes.data.categories || []);
 
-        const prodRes = await axios.get("/api/products/add");
+        const prodRes = await axios.get("/api/products/add?status=all");
         setProducts(prodRes.data.products || []);
       } catch (e) {
-        console.error(e);
+        console.error("Load Error:", e);
       }
     }
     load();
@@ -71,7 +73,9 @@ export default function AdminProducts() {
     const files = Array.from(e.target.files).slice(0, 10);
 
     const previews = files.map((file) => URL.createObjectURL(file));
-    imagePreviews.forEach((u) => URL.revokeObjectURL(u));
+
+    // revoke old object URLs
+    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
 
     setSelectedFiles(files);
     setImagePreviews(previews);
@@ -86,77 +90,61 @@ export default function AdminProducts() {
     setImagePreviews(updatedPreviews);
   };
 
-  // CONVERT FILE TO BASE64
-  const filesToBase64 = async (files: File[]) => {
-    const promises = files.map(
-      (file) =>
-        new Promise<{ url: string; public_id: string }>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () =>
-            resolve({ url: reader.result as string, public_id: file.name });
-          reader.onerror = (error) => reject(error);
-        })
-    );
-    return Promise.all(promises);
-  };
-const handleSubmit = async (e: FormEvent) => {
-  e.preventDefault();
+  // FORM SUBMIT
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
-  if (!form.title || !form.slug || !form.price || !form.category) {
-    alert("Required fields missing!");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const formData = new FormData();
-
-    formData.append("title", form.title);
-    formData.append("slug", form.slug);
-    formData.append("price", form.price);
-    formData.append("discount", form.discount || "0");
-    formData.append("description", form.description);
-    formData.append("category", form.category);
-    formData.append("stock", form.stock);
-
-    // 🔥 Real image files append
-    selectedFiles.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    const prod = await axios.post("/api/products/add", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    if (prod.data.success) {
-      alert("Product Added Successfully!");
-
-      setProducts((prev) => [...prev, prod.data.product]);
-
-      // Reset form
-      setForm({
-        title: "",
-        slug: "",
-        price: "",
-        discount: "",
-        description: "",
-        category: "",
-        stock: "",
-      });
-      setSelectedFiles([]);
-      setImagePreviews([]);
+    if (!form.title || !form.slug || !form.price || !form.category || selectedFiles.length === 0) {
+      alert("Required fields missing or no images selected!");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error adding product");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    setLoading(true);
+
+    try {
+      // 1️⃣ Upload images first
+      const uploadData = new FormData();
+      selectedFiles.forEach((file) => uploadData.append("images", file));
+
+      const uploadRes = await axios.post("/api/products/Upload", uploadData);
+      if (!uploadRes.data.success) throw new Error("Image upload failed");
+
+      const uploadedImages = uploadRes.data.files.map((f: any) => ({
+        url: f.url,
+        public_id: f.name,
+      }));
+
+      // 2️⃣ Add product with uploaded image URLs
+      const prodRes = await axios.post("/api/products/add", {
+        ...form,
+        images: uploadedImages,
+      });
+
+      if (prodRes.data.success) {
+        alert("Product Added Successfully!");
+        setProducts((prev) => [prodRes.data.product, ...prev]);
+
+        // reset form
+        setForm({
+          title: "",
+          slug: "",
+          price: "",
+          discount: "",
+          description: "",
+          category: "",
+          stock: "",
+        });
+        setSelectedFiles([]);
+        imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+        setImagePreviews([]);
+      }
+    } catch (err: any) {
+      console.error("Add Product Error:", err);
+      alert(err?.response?.data?.message || err.message || "Error adding product");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-10">
@@ -241,22 +229,17 @@ const handleSubmit = async (e: FormEvent) => {
 
         {/* IMAGE UPLOAD */}
         <div className="border p-4 rounded bg-amber-50">
-          <label className="font-semibold">Upload Images</label>
-          <div
-            onClick={() => document.getElementById("imageUpload")?.click()}
-            className="mt-2 border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-100"
-          >
-            Click to upload (Max 10)
-          </div>
+          <label htmlFor="imageUpload" className="font-semibold cursor-pointer block">
+            Upload Images
+          </label>
           <input
             id="imageUpload"
-            multiple
             type="file"
+            multiple
             accept="image/*"
-            className="hidden"
             onChange={handleFileChange}
+            className="hidden"
           />
-
           {imagePreviews.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4">
               {imagePreviews.map((src, i) => (

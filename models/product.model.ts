@@ -24,7 +24,7 @@ export interface IProductInput {
   discount?: number;
   stock?: number;
   images: { url: string; public_id: string }[];
-  variants?: IVariant[]; // ✅ UPDATED
+  variants?: IVariant[];
   status?: "active" | "inactive";
 }
 
@@ -42,7 +42,7 @@ export interface IProduct extends Document {
   finalPrice: number;
   stock: number;
   images: { url: string; public_id: string }[];
-  variants?: IVariant[]; // ✅ UPDATED
+  variants?: IVariant[];
   status: "active" | "inactive";
   deletedAt?: Date | null;
 
@@ -72,14 +72,9 @@ const productSchema = new mongoose.Schema<IProduct>(
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String, default: "" },
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     brand: { type: String, default: "" },
 
-    // Base product price (optional if variants exist)
     price: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     finalPrice: { type: Number, required: true },
@@ -93,15 +88,9 @@ const productSchema = new mongoose.Schema<IProduct>(
       },
     ],
 
-    // ✅ UPDATED VARIANTS
     variants: [variantSchema],
 
-    status: {
-      type: String,
-      enum: ["active", "inactive"],
-      default: "active",
-    },
-
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }
@@ -136,7 +125,7 @@ productSchema.statics.createProduct = async function (data: IProductInput) {
     data.slug = data.title.toLowerCase().trim().replace(/\s+/g, "-");
   }
 
-  // Base final price
+  // Calculate finalPrice
   const price = data.price;
   const discount = data.discount || 0;
   const finalPrice = Math.round(price - (price * discount) / 100);
@@ -144,9 +133,7 @@ productSchema.statics.createProduct = async function (data: IProductInput) {
   // Process variants
   const variants = data.variants?.map((v) => ({
     ...v,
-    sellingPrice: Math.round(
-      v.price - (v.price * (v.discount || 0)) / 100
-    ),
+    sellingPrice: Math.round(v.price - (v.price * (v.discount || 0)) / 100),
   }));
 
   return this.create({
