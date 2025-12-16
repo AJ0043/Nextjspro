@@ -4,23 +4,38 @@ import Product from "@/models/product.model";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connect();
-    const { id } = params;
 
+    // ✅ unwrap the Promise
+    const { id } = await context.params;
+
+    // ✅ Find the product which is soft deleted (inactive)
     const product = await Product.findById(id);
-    if (!product || !product.deletedAt) {
-      return NextResponse.json({ success: false, message: "Product not found in Recycle Bin" }, { status: 404 });
+    if (!product || product.status !== "inactive") {
+      return NextResponse.json(
+        { success: false, message: "Product not found in inactive list" },
+        { status: 404 }
+      );
     }
 
+    // ✅ Restore product
+    product.status = "active";
     product.deletedAt = null;
     await product.save();
 
-    return NextResponse.json({ success: true, product });
+    return NextResponse.json({
+      success: true,
+      message: "Product restored successfully",
+      product,
+    });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ success: false, message: "Failed to restore product" }, { status: 500 });
+    console.error("RESTORE PRODUCT ERROR:", err);
+    return NextResponse.json(
+      { success: false, message: "Failed to restore product" },
+      { status: 500 }
+    );
   }
 }

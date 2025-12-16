@@ -16,6 +16,7 @@ interface Product {
   title: string;
   price: number;
   finalPrice: number;
+  status: string;
   deletedAt?: string | null;
   images?: ImageObj[];
 }
@@ -63,14 +64,13 @@ export default function InactiveProductsPage() {
   /* -----------------------------
      Pagination
   ----------------------------- */
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
+  const totalPages = Math.ceil(filteredProducts.length / pageSize) || 1;
 
   const paginatedProducts = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, page, pageSize]);
 
-  // Reset page on search or pageSize change
   useEffect(() => {
     setPage(1);
   }, [search, pageSize]);
@@ -82,12 +82,14 @@ export default function InactiveProductsPage() {
     if (!confirm("Restore this product?")) return;
 
     try {
-      const res = await axios.patch(`/api/products/restore/${id}`);
+      const res = await axios.put(`/api/products/restore/${id}`);
       if (res.data.success) {
+        alert(res.data.message);
         setProducts((prev) => prev.filter((p) => p._id !== id));
       }
-    } catch (err) {
-      console.error("RESTORE ERROR:", err);
+    } catch (err: any) {
+      console.error("RESTORE ERROR:", err.response || err.message);
+      alert(err.response?.data?.message || "Restore failed");
     }
   };
 
@@ -100,10 +102,12 @@ export default function InactiveProductsPage() {
     try {
       const res = await axios.delete(`/api/products/permanent/${id}`);
       if (res.data.success) {
+        alert(res.data.message);
         setProducts((prev) => prev.filter((p) => p._id !== id));
       }
-    } catch (err) {
-      console.error("DELETE ERROR:", err);
+    } catch (err: any) {
+      console.error("DELETE ERROR:", err.response || err.message);
+      alert(err.response?.data?.message || "Delete failed");
     }
   };
 
@@ -114,11 +118,12 @@ export default function InactiveProductsPage() {
   ----------------------------- */
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-serif mb-6 text-white border rounded w-full p-2 bg-teal-800">
+      {/* Title */}
+      <h1 className="text-3xl font-serif mb-6 text-white rounded w-[350px] px-4 py-2 bg-yellow-500">
         Inactive Products
       </h1>
 
-      {/* Search + Row Limit */}
+      {/* Search + Page size */}
       <div className="flex items-center gap-4 mb-4">
         <input
           type="text"
@@ -131,7 +136,7 @@ export default function InactiveProductsPage() {
         <select
           value={pageSize}
           onChange={(e) => setPageSize(Number(e.target.value))}
-          className="px-3 py-2 border rounded cursor-pointer bg-teal-600 text-amber-50"
+          className="px-3 py-2 rounded cursor-pointer bg-teal-600 text-white"
         >
           <option value={10}>10 rows</option>
           <option value={20}>20 rows</option>
@@ -143,23 +148,29 @@ export default function InactiveProductsPage() {
         <p className="text-gray-600">No inactive products found</p>
       ) : (
         <>
-          <div className="overflow-x-auto border rounded">
-            <table className="min-w-[1000px] w-full border-collapse bg-amber-100">
-              <thead className="bg-purple-700 text-amber-50">
+          {/* Table */}
+          <div className="overflow-x-auto rounded shadow">
+            <table className="min-w-[1000px] w-full bg-amber-100">
+              <thead className="bg-purple-700 text-white">
                 <tr>
-                  <th className="p-2 border">Image</th>
-                  <th className="p-2 border">Title</th>
-                  <th className="p-2 border">Price</th>
-                  <th className="p-2 border">Final Price</th>
-                  <th className="p-2 border">Inactive Since</th>
-                  <th className="p-2 border">Actions</th>
+                  <th className="p-3 text-left">Image</th>
+                  <th className="p-3 text-left">Title</th>
+                  <th className="p-3 text-center">Price</th>
+                  <th className="p-3 text-center">Final Price</th>
+                  <th className="p-3 text-center">Inactive Since</th>
+                  <th className="p-3 text-center">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedProducts.map((p) => (
-                  <tr key={p._id} className="hover:bg-gray-50">
-                    <td className="p-2 border text-center">
+                {paginatedProducts.map((p, index) => (
+                  <tr
+                    key={p._id}
+                    className={`hover:bg-amber-200 ${
+                      index % 2 === 0 ? "bg-amber-50" : "bg-amber-100"
+                    }`}
+                  >
+                    <td className="p-3 text-center">
                       {p.images?.[0]?.url ? (
                         <img
                           src={p.images[0].url}
@@ -171,25 +182,25 @@ export default function InactiveProductsPage() {
                       )}
                     </td>
 
-                    <td className="p-2 border font-semibold">{p.title}</td>
+                    <td className="p-3 font-semibold">{p.title}</td>
 
-                    <td className="p-2 border text-center">₹{p.price}</td>
+                    <td className="p-3 text-center">₹{p.price}</td>
 
-                    <td className="p-2 border text-center font-bold text-green-700">
+                    <td className="p-3 text-center font-bold text-green-700">
                       ₹{p.finalPrice}
                     </td>
 
-                    <td className="p-2 border text-center font-semibold">
+                    <td className="p-3 text-center font-semibold">
                       {p.deletedAt
                         ? new Date(p.deletedAt).toLocaleString("en-IN")
                         : "-"}
                     </td>
 
-                    <td className="p-2 border">
+                    <td className="p-3">
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={() => handleRestore(p._id)}
-                          className="px-3 py-2 bg-green-500 text-white rounded-3xl hover:bg-green-700 flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-2 bg-green-500 text-white rounded-full hover:bg-green-700 flex items-center gap-1"
                         >
                           <RotateCcw size={16} />
                           Restore
@@ -197,7 +208,7 @@ export default function InactiveProductsPage() {
 
                         <button
                           onClick={() => handlePermanentDelete(p._id)}
-                          className="px-3 py-2 bg-red-500 text-white rounded-3xl hover:bg-red-600 flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-2 bg-red-500 text-white rounded-full hover:bg-red-700 flex items-center gap-1"
                         >
                           <Trash2 size={16} />
                           Delete
@@ -215,7 +226,7 @@ export default function InactiveProductsPage() {
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-2 border rounded disabled:opacity-50 bg-amber-600 cursor-pointer"
+              className="px-3 py-2 rounded disabled:opacity-50 bg-amber-600 text-white"
             >
               ◀
             </button>
@@ -227,7 +238,7 @@ export default function InactiveProductsPage() {
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-2 border rounded disabled:opacity-50 bg-amber-600 cursor-pointer"
+              className="px-3 py-2 rounded disabled:opacity-50 bg-amber-600 text-white"
             >
               ▶
             </button>

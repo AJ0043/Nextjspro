@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import connect from "@/lib/databaseConnection";
 import Product from "@/models/product.model";
 
@@ -39,50 +39,39 @@ export async function GET() {
 }
 
 /* -----------------------------
-   POST → Add Product (FormData)
+   POST → Add Product (JSON)
 ----------------------------- */
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     await connect();
 
-    // ✅ Read FormData
-    const formData = await req.formData();
+    const body = await req.json();
 
-    const title = formData.get("title") as string;
-    const slugInput = formData.get("slug") as string;
-    const price = Number(formData.get("price"));
-    const discount = Number(formData.get("discount") || 0);
-    const description = formData.get("description") as string;
-    const category = formData.get("category") as string;
-    const stock = Number(formData.get("stock") || 0);
-
-    const imageFiles = formData.getAll("images") as File[];
+    const {
+      title,
+      slug,
+      price,
+      discount = 0,
+      description,
+      category,
+      stock = 0,
+      images,
+    } = body;
 
     // ✅ Validation
-    if (!title || !price || !category || imageFiles.length === 0) {
+    if (!title || !price || !category || !images?.length) {
       return NextResponse.json(
         {
           success: false,
-          message: "Required fields or images missing",
+          message: "Required fields missing",
         },
         { status: 400 }
       );
     }
 
-    // ✅ Convert images to base64 (or later Cloudinary)
-    const images = await Promise.all(
-      imageFiles.map(async (file) => {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        return {
-          url: `data:${file.type};base64,${buffer.toString("base64")}`,
-          public_id: `${Date.now()}-${file.name}`,
-        };
-      })
-    );
-
-    // ✅ Unique slug
-    let baseSlug = slugInput
-      ? generateSlug(slugInput)
+    // ✅ Unique Slug
+    const baseSlug = slug
+      ? generateSlug(slug)
       : generateSlug(title);
 
     let uniqueSlug = baseSlug;
@@ -97,7 +86,7 @@ export async function POST(req: NextRequest) {
       price - (price * discount) / 100
     );
 
-    // ✅ Create product
+    // ✅ Create Product
     const product = await Product.create({
       title,
       slug: uniqueSlug,
@@ -107,13 +96,12 @@ export async function POST(req: NextRequest) {
       discount,
       finalPrice,
       stock,
-      images,
+      images, // 🔥 URLs from upload API
       status: "active",
     });
 
     return NextResponse.json({
       success: true,
-      message: "Product added successfully",
       product,
     });
   } catch (error) {

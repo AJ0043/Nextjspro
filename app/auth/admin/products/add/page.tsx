@@ -1,7 +1,8 @@
 "use client";
 
-import React, { ChangeEvent, FormEvent, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useDropzone } from "react-dropzone";
 
 interface Category {
   _id: string;
@@ -11,6 +12,7 @@ interface Category {
 interface Product {
   _id: string;
   title: string;
+  
   slug: string;
   price: number;
   discount?: number;
@@ -27,11 +29,8 @@ interface Product {
 export default function AdminProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -43,7 +42,6 @@ export default function AdminProducts() {
     stock: "",
   });
 
-  // FETCH CATEGORY & PRODUCTS
   useEffect(() => {
     async function load() {
       try {
@@ -59,42 +57,28 @@ export default function AdminProducts() {
     load();
   }, []);
 
-  // INPUT CHANGE
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // FILE CHANGE HANDLER
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files).slice(0, 10);
+  // Dropzone setup
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: { "image/*": [] },
+    onDrop: (acceptedFiles) => setFiles(acceptedFiles.slice(0, 10)),
+    noClick: true,
+    multiple: true,
+  });
 
-    const previews = files.map((file) => URL.createObjectURL(file));
-
-    // revoke old object URLs
-    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-
-    setSelectedFiles(files);
-    setImagePreviews(previews);
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // REMOVE IMAGE
-  const handleRemoveImage = (index: number) => {
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
-    const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
-
-    setSelectedFiles(updatedFiles);
-    setImagePreviews(updatedPreviews);
-  };
-
-  // FORM SUBMIT
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!form.title || !form.slug || !form.price || !form.category || selectedFiles.length === 0) {
+    if (!form.title || !form.slug || !form.price || !form.category || files.length === 0) {
       alert("Required fields missing or no images selected!");
       return;
     }
@@ -102,11 +86,10 @@ export default function AdminProducts() {
     setLoading(true);
 
     try {
-      // 1️⃣ Upload images first
       const uploadData = new FormData();
-      selectedFiles.forEach((file) => uploadData.append("images", file));
+      files.forEach((file) => uploadData.append("images", file));
 
-      const uploadRes = await axios.post("/api/products/Upload", uploadData);
+      const uploadRes = await axios.post("/api/products/uploads", uploadData);
       if (!uploadRes.data.success) throw new Error("Image upload failed");
 
       const uploadedImages = uploadRes.data.files.map((f: any) => ({
@@ -114,7 +97,6 @@ export default function AdminProducts() {
         public_id: f.name,
       }));
 
-      // 2️⃣ Add product with uploaded image URLs
       const prodRes = await axios.post("/api/products/add", {
         ...form,
         images: uploadedImages,
@@ -124,7 +106,6 @@ export default function AdminProducts() {
         alert("Product Added Successfully!");
         setProducts((prev) => [prodRes.data.product, ...prev]);
 
-        // reset form
         setForm({
           title: "",
           slug: "",
@@ -134,9 +115,7 @@ export default function AdminProducts() {
           category: "",
           stock: "",
         });
-        setSelectedFiles([]);
-        imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-        setImagePreviews([]);
+        setFiles([]);
       }
     } catch (err: any) {
       console.error("Add Product Error:", err);
@@ -150,10 +129,7 @@ export default function AdminProducts() {
     <div className="p-4 sm:p-6 lg:p-10">
       <h1 className="text-2xl sm:text-3xl font-serif mb-6">Add Product</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 max-w-full sm:max-w-2xl lg:max-w-3xl"
-      >
+      <form onSubmit={handleSubmit} className="grid gap-4 max-w-full sm:max-w-2xl lg:max-w-3xl">
         <input
           type="text"
           name="title"
@@ -227,39 +203,37 @@ export default function AdminProducts() {
           </select>
         </div>
 
-        {/* IMAGE UPLOAD */}
-        <div className="border p-4 rounded bg-amber-50">
-          <label htmlFor="imageUpload" className="font-semibold cursor-pointer block">
-            Upload Images
-          </label>
-          <input
-            id="imageUpload"
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          {imagePreviews.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4">
-              {imagePreviews.map((src, i) => (
-                <div key={i} className="relative group">
-                  <img
-                    src={src}
-                    className="w-full h-28 object-cover rounded border shadow"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(i)}
-                    className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100"
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* DROPZONE */}
+        <div
+          {...getRootProps()}
+          className="border p-4 rounded bg-amber-50 cursor-pointer text-center"
+        >
+          <input {...getInputProps()} />
+          <p>Click the box or drag & drop images here</p>
+          <button type="button" onClick={open} className="mt-2 px-3 py-1 bg-purple-600 text-white rounded">
+            Select Images
+          </button>
         </div>
+
+        {files.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4">
+            {files.map((file, i) => (
+              <div key={i} className="relative group">
+                <img
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-28 object-cover rounded border shadow"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100"
+                >
+                  X
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           type="submit"

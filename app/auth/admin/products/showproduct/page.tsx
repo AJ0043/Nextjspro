@@ -10,7 +10,8 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
-  Recycle
+  Recycle,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 
@@ -39,6 +40,7 @@ interface ProductType {
   deletedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  newImage?: File | null;
 }
 
 /* -----------------------------
@@ -120,54 +122,114 @@ export default function ShowProductPage() {
   }, [categories]);
 
   /* -----------------------------
-     Update Product
+     Export Product list
   ----------------------------- */
-  const handleUpdate = async () => {
-    if (!editProduct) return;
-    try {
-      const payload = {
-        title: editProduct.title,
-        slug: editProduct.slug,
-        description: editProduct.description,
-        price: editProduct.price,
-        discount: editProduct.discount,
-        stock: editProduct.stock,
-        category: editProduct.category?._id,
-      };
+  const handleExportCSV = () => {
+  if (products.length === 0) return;
 
-      const res = await axios.put(`/api/products/${editProduct._id}`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
+  const headers = [
+    "Title",
+    "Slug",
+    "Category",
+    "Price",
+    "Discount",
+    "Final Price",
+    "Stock",
+    "Status",
+    "Created At",
+    "Updated At",
+  ];
 
-      if (res.data.success) {
-        setProducts((prev) =>
-          prev.map((p) => (p._id === editProduct._id ? res.data.product : p))
-        );
-        setEditProduct(null);
-      }
-    } catch (err) {
-      console.error("UPDATE ERROR:", err);
-    }
-  };
+  const rows = products.map((p) => [
+    `"${p.title}"`,
+    `"${p.slug}"`,
+    `"${p.category?.name || ""}"`,
+    p.price,
+    p.discount || 0,
+    p.finalPrice,
+    p.stock,
+    p.status || "active",
+    p.createdAt ? new Date(p.createdAt).toLocaleString("en-IN") : "",
+    p.updatedAt ? new Date(p.updatedAt).toLocaleString("en-IN") : "",
+  ]);
 
+  const csvContent =
+    [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "products.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+  
+  
+  
   /* -----------------------------
-   Soft Delete Product
+   Update Product (FORM DATA)
 ----------------------------- */
-const handleDelete = async (id: string) => {
-  if (!confirm("Do you want to move this product to Recycle Bin?")) return;
+const handleUpdate = async () => {
+  if (!editProduct) return;
 
   try {
-    const res = await axios.delete(`/api/products/soft-delete/${id}`);
+    const formData = new FormData();
+
+    formData.append("title", editProduct.title);
+    formData.append("slug", editProduct.slug);
+    formData.append("description", editProduct.description || "");
+    formData.append("price", String(editProduct.price));
+    formData.append("discount", String(editProduct.discount ?? 0));
+    formData.append("stock", String(editProduct.stock));
+
+    // ✅ category ONLY if exists
+    if (editProduct.category?._id) {
+      formData.append("category", editProduct.category._id);
+    }
+
+    // ✅ image optional
+    if (editProduct.newImage instanceof File) {
+      formData.append("images", editProduct.newImage);
+    }
+
+    const res = await axios.put(
+      `/api/products/${editProduct._id}`,
+      formData
+      // ❌ headers mat bhej
+    );
 
     if (res.data.success) {
-      // remove from active list
-      setProducts((prev) => prev.filter((p) => p._id !== id));
+      setProducts((prev) =>
+        prev.map((p) =>
+          p._id === editProduct._id ? res.data.product : p
+        )
+      );
+      setEditProduct(null);
     }
-  } catch (err) {
-    console.error("SOFT DELETE ERROR:", err);
+  } catch (err: any) {
+    console.error("UPDATE ERROR:", err.response?.data || err.message);
   }
 };
 
+  /* -----------------------------
+     Soft Delete Product
+  ----------------------------- */
+  const handleDelete = async (id: string) => {
+    if (!confirm("Do you want to move this product to Recycle Bin?")) return;
+
+    try {
+      const res = await axios.delete(`/api/products/soft-delete/${id}`);
+      if (res.data.success) {
+        setProducts((prev) => prev.filter((p) => p._id !== id));
+      }
+    } catch (err) {
+      console.error("SOFT DELETE ERROR:", err);
+    }
+  };
 
   /* -----------------------------
      Table Pagination & Filters
@@ -212,7 +274,7 @@ const handleDelete = async (id: string) => {
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between gap-3 mb-4">
-        <h1 className="text-4xl font-bold">Products</h1>
+        <h1 className="text-4xl font-serif">Products</h1>
         <div className="flex gap-2 flex-wrap">
           <input
             className="border px-3 py-2 rounded w-64"
@@ -227,13 +289,23 @@ const handleDelete = async (id: string) => {
             <Plus size={16} /> Add Product
           </Link>
 
-        <Link
-             href="/auth/admin/products/inactive"
-             className="px-3 py-2 bg-purple-800 text-white rounded flex items-center gap-1 cursor-pointer"
-            >
-            <Recycle size={16} />
-              Recycle Bin
-        </Link>
+          <Link
+            href="/auth/admin/products/inactive"
+            className="px-3 py-2 bg-purple-800 text-white rounded flex items-center gap-1 cursor-pointer"
+          >
+            <Recycle size={16} /> Recycle Bin
+          </Link>
+         <button
+           onClick={handleExportCSV}
+           className="px-3 py-2 bg-orange-500 text-white rounded flex items-center gap-1 hover:bg-orange-700 transition cursor-pointer"
+           >
+          <Download size={16} />
+           Export CSV
+         </button>
+
+
+      
+      
         </div>
       </div>
 
@@ -301,38 +373,20 @@ const handleDelete = async (id: string) => {
                       )}
                     </td>
                   )}
-                  {columnVisibility.title && (
-                    <td className="p-2 font-semibold">{p.title}</td>
-                  )}
+                  {columnVisibility.title && <td className="p-2 font-semibold">{p.title}</td>}
                   {columnVisibility.slug && <td className="p-2">{p.slug}</td>}
-                  {columnVisibility.category && (
-                    <td className="p-2">{p.category?.name || "-"}</td>
-                  )}
-                  {columnVisibility.price && (
-                    <td className="p-2 text-center">₹{p.price}</td>
-                  )}
-                  {columnVisibility.discount && (
-                    <td className="p-2 text-center">{p.discount || 0}%</td>
-                  )}
+                  {columnVisibility.category && <td className="p-2">{p.category?.name || "-"}</td>}
+                  {columnVisibility.price && <td className="p-2 text-center">₹{p.price}</td>}
+                  {columnVisibility.discount && <td className="p-2 text-center">{p.discount || 0}%</td>}
                   {columnVisibility.final && (
-                    <td className="p-2 text-center font-semibold text-green-700">
-                      ₹{p.finalPrice}
-                    </td>
+                    <td className="p-2 text-center font-semibold text-green-700">₹{p.finalPrice}</td>
                   )}
-                  {columnVisibility.stock && (
-                    <td className="p-2 text-center">{p.stock}</td>
-                  )}
+                  {columnVisibility.stock && <td className="p-2 text-center">{p.stock}</td>}
                   {columnVisibility.created && (
-                    <td className="p-2 text-center">
-                      {p.createdAt &&
-                        new Date(p.createdAt).toLocaleString("en-IN")}
-                    </td>
+                    <td className="p-2 text-center">{p.createdAt && new Date(p.createdAt).toLocaleString("en-IN")}</td>
                   )}
                   {columnVisibility.updated && (
-                    <td className="p-2 text-center">
-                      {p.updatedAt &&
-                        new Date(p.updatedAt).toLocaleString("en-IN")}
-                    </td>
+                    <td className="p-2 text-center">{p.updatedAt && new Date(p.updatedAt).toLocaleString("en-IN")}</td>
                   )}
                   {columnVisibility.action && (
                     <td className="p-2 flex gap-2 justify-center flex-wrap">
@@ -490,155 +544,192 @@ const handleDelete = async (id: string) => {
         )}
 
         {/* Edit Product */}
-        {editProduct && (
-          <motion.div
-            key={`edit-${editProduct._id}`}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setEditProduct(null)}
-          >
-            <motion.div
-              className="bg-white rounded-lg shadow-xl max-w-3xl w-full flex flex-col md:flex-row overflow-hidden relative"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Left Image */}
-              <div className="md:w-1/2 w-full bg-gray-100 flex items-center justify-center p-4 cursor-pointer hover:scale-105 transition">
-                {editProduct.images?.[0]?.url && (
-                  <img
-                    src={editProduct.images[0].url}
-                    className="h-64 w-full object-cover rounded"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setZoomImage(editProduct.images![0].url);
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Right Form */}
-              <div className="md:w-1/2 w-full p-6 flex flex-col gap-4 border-l md:border-l-2 border-gray-200 relative">
-                <h2 className="text-2xl font-bold text-teal-800 mb-4">Edit Product</h2>
-
-                {[
-                  {
-                    label: "Title",
-                    value: editProduct.title,
-                    type: "text" as const,
-                    onChange: (v: string) => setEditProduct({ ...editProduct, title: v }),
-                  },
-                  {
-                    label: "Slug",
-                    value: editProduct.slug,
-                    type: "text" as const,
-                    onChange: (v: string) => setEditProduct({ ...editProduct, slug: v }),
-                  },
-                  {
-                    label: "Description",
-                    value: editProduct.description,
-                    type: "textarea" as const,
-                    onChange: (v: string) => setEditProduct({ ...editProduct, description: v }),
-                  },
-                  {
-                    label: "Price",
-                    value: editProduct.price.toString(),
-                    type: "number" as const,
-                    onChange: (v: number) =>
-                      setEditProduct({
-                        ...editProduct,
-                        price: v,
-                        finalPrice: v - (v * (editProduct.discount || 0)) / 100,
-                      }),
-                  },
-                  {
-                    label: "Discount",
-                    value: (editProduct.discount || 0).toString(),
-                    type: "number" as const,
-                    onChange: (v: number) =>
-                      setEditProduct({
-                        ...editProduct,
-                        discount: v,
-                        finalPrice: editProduct.price - (editProduct.price * v) / 100,
-                      }),
-                  },
-                  {
-                    label: "Stock",
-                    value: editProduct.stock.toString(),
-                    type: "number" as const,
-                    onChange: (v: number) => setEditProduct({ ...editProduct, stock: v }),
-                  },
-                ].map((field, idx) => (
-                  <div key={idx} className="flex items-center gap-4">
-                    <label className="w-32 font-semibold">{field.label}:</label>
-                    {field.type === "textarea" ? (
-                      <textarea
-                        className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        placeholder={field.label}
-                      />
-                    ) : (
-                      <input
-                        type={field.type}
-                        className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        value={field.value}
-                        onChange={(e) =>
-                          field.type === "number"
-                            ? field.onChange(Number(e.target.value))
-                            : field.onChange(e.target.value)
-                        }
-                        placeholder={field.label}
-                      />
-                    )}
-                  </div>
-                ))}
-
-                {/* Category Dropdown */}
-                <div className="flex items-center gap-4">
-                  <label className="w-32 font-semibold">Category:</label>
-                  <select
-                    className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
-                    value={editProduct.category?._id || ""}
-                    onChange={(e) => {
-                      const selectedCat = categories.find((c) => c._id === e.target.value);
-                      setEditProduct({ ...editProduct, category: selectedCat });
-                    }}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.length === 0 ? (
-                      <option disabled>Loading categories...</option>
-                    ) : (
-                      categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleUpdate}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditProduct(null)}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+{editProduct && (
+  <motion.div
+    key={`edit-${editProduct._id}`}
+    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    onClick={() => setEditProduct(null)}
+  >
+    <motion.div
+      className="bg-white rounded-lg shadow-xl max-w-3xl w-full flex flex-col md:flex-row overflow-hidden relative"
+      initial={{ scale: 0.8 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0.8 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Left Image + Upload */}
+      <div className="md:w-1/2 w-full bg-gray-100 flex flex-col items-center justify-center p-4 gap-3">
+        {/* Preview Image */}
+        {(editProduct.newImage || editProduct.images?.[0]?.url) && (
+          <img
+            src={
+              editProduct.newImage
+                ? URL.createObjectURL(editProduct.newImage)
+                : editProduct.images?.[0]?.url
+            }
+            className="h-64 w-full object-cover rounded cursor-zoom-in"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomImage(
+                editProduct.newImage
+                  ? URL.createObjectURL(editProduct.newImage)
+                  : editProduct.images![0].url
+              );
+            }}
+          />
         )}
+
+        {/* Upload Input */}
+        <input
+          type="file"
+          accept="image/*"
+          className="w-full border rounded px-3 py-2 bg-white"
+          onChange={(e) =>
+            setEditProduct({
+              ...editProduct,
+              newImage: e.target.files?.[0] || null,
+            })
+          }
+        />
+        <p className="text-xs text-gray-500 text-center">
+          Upload new image to replace existing one
+        </p>
+      </div>
+
+      {/* Right Form */}
+      <div className="md:w-1/2 w-full p-6 flex flex-col gap-4 border-l md:border-l-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-teal-800 mb-4">Edit Product</h2>
+
+        {[
+          {
+            label: "Title",
+            value: editProduct.title,
+            type: "text" as const,
+            onChange: (v: string) =>
+              setEditProduct({ ...editProduct, title: v }),
+          },
+          {
+            label: "Slug",
+            value: editProduct.slug,
+            type: "text" as const,
+            onChange: (v: string) =>
+              setEditProduct({ ...editProduct, slug: v }),
+          },
+          {
+            label: "Description",
+            value: editProduct.description,
+            type: "textarea" as const,
+            onChange: (v: string) =>
+              setEditProduct({ ...editProduct, description: v }),
+          },
+          {
+            label: "Price",
+            value: editProduct.price.toString(),
+            type: "number" as const,
+            onChange: (v: number) =>
+              setEditProduct({
+                ...editProduct,
+                price: v,
+                finalPrice:
+                  v - (v * (editProduct.discount || 0)) / 100,
+              }),
+          },
+          {
+            label: "Discount",
+            value: (editProduct.discount || 0).toString(),
+            type: "number" as const,
+            onChange: (v: number) =>
+              setEditProduct({
+                ...editProduct,
+                discount: v,
+                finalPrice:
+                  editProduct.price -
+                  (editProduct.price * v) / 100,
+              }),
+          },
+          {
+            label: "Stock",
+            value: editProduct.stock.toString(),
+            type: "number" as const,
+            onChange: (v: number) =>
+              setEditProduct({ ...editProduct, stock: v }),
+          },
+        ].map((field, idx) => (
+          <div key={idx} className="flex items-center gap-4">
+            <label className="w-32 font-semibold">
+              {field.label}:
+            </label>
+            {field.type === "textarea" ? (
+              <textarea
+                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                value={field.value}
+                onChange={(e) =>
+                  field.onChange(e.target.value)
+                }
+              />
+            ) : (
+              <input
+                type={field.type}
+                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                value={field.value}
+                onChange={(e) =>
+                  field.type === "number"
+                    ? field.onChange(Number(e.target.value))
+                    : field.onChange(e.target.value)
+                }
+              />
+            )}
+          </div>
+        ))}
+
+        {/* Category Dropdown */}
+        <div className="flex items-center gap-4">
+          <label className="w-32 font-semibold">Category:</label>
+          <select
+            className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
+            value={editProduct.category?._id || ""}
+            onChange={(e) => {
+              const selectedCat = categories.find(
+                (c) => c._id === e.target.value
+              );
+              setEditProduct({
+                ...editProduct,
+                category: selectedCat,
+              });
+            }}
+          >
+            <option value="">Select Category</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handleUpdate}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setEditProduct(null)}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  </motion.div>
+)}
+
       </AnimatePresence>
     </div>
   );
