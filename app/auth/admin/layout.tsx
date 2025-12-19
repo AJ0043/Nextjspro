@@ -139,13 +139,7 @@ useEffect(() => {
             </Link>
 
 
-              <Link
-                 href="/products/variants"
-                 className="flex items-center gap-2 hover:text-purple-600"
-                 >
-                <Layers size={18} className="text-purple-600" />
-               All Variant
-              </Link>
+             
 
              <Link
                 href="/auth/admin/products/showproduct"
@@ -155,19 +149,7 @@ useEffect(() => {
                 All Product
             </Link>
 
-           <Link
-                href="#"
-                className="text-black flex items-center gap-1 hover:text-purple-600"
-                >
-               <Layers size={18} className="text-purple-600" />
-               Add Variants
-          </Link>
-
-
-
-
-
-
+          
               </div>
             )}
           </div>
@@ -217,12 +199,12 @@ useEffect(() => {
             {openCoupons && open && (
               <div className="ml-10 space-y-4 mt-2">
 
-                <Link href="/coupons/add" className="flex items-center gap-2 hover:text-purple-600">
+                <Link href="/auth/admin/Coupons/add" className="flex items-center gap-2 hover:text-purple-600">
                   <TicketPlus size={18} className="text-purple-600" />
                   Add Coupon
                 </Link>
 
-                <Link href="/coupons" className="flex items-center gap-2 hover:text-purple-600">
+                <Link href="/auth/admin/Coupons" className="flex items-center gap-2 hover:text-purple-600">
                   <Ticket size={18} className="text-purple-600" />
                   All Coupons
                 </Link>
@@ -233,7 +215,7 @@ useEffect(() => {
 
           {/* Users */}
           <Link
-            href="/users"
+            href="/auth/admin/Users"
             className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
           >
             <Users size={20} className="text-purple-600" />
@@ -242,11 +224,11 @@ useEffect(() => {
 
           {/* Media */}
           <Link
-            href="/auth/admin/media"
+            href="/auth/admin/Orders"
             className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
           >
             <ImageIcon size={20} className="text-purple-600" />
-            {open && <span>Media</span>}
+            {open && <span>Orders</span>}
           </Link>
 
           {/* Reviews */}

@@ -11,7 +11,9 @@ import {
   ChevronDown,
   Plus,
   Recycle,
-  Download
+  Download,
+  Layers,
+  Boxes,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -330,7 +332,7 @@ const handleUpdate = async () => {
 
       {/* Table */}
       <div className="overflow-x-auto border rounded">
-        <table className="min-w-[1500px] w-full text-base bg-amber-100">
+        <table className="min-w-[2000px] w-full text-base bg-amber-100">
           <thead className="bg-teal-800 text-white">
             <tr>
               {columnVisibility.image && <th className="p-3">Image</th>}
@@ -408,7 +410,7 @@ const handleUpdate = async () => {
                       >
                         <Trash2 size={20} />
                       </button>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1.5">
                         <button
                           onClick={() => moveRow(index, "up")}
                           className="px-3 py-2 bg-purple-400 text-white rounded hover:bg-purple-600 transition cursor-pointer mt-3"
@@ -421,6 +423,31 @@ const handleUpdate = async () => {
                         >
                           <ChevronDown size={16} />
                         </button>
+                      {/* View Variants */}
+               <Link
+                href={`/auth/admin/products/${p._id}/variants`}
+                className="flex items-center px-3 py-1 rounded-sm
+                     bg-gray-600 text-white text-sm gap-2 mt-3
+                       hover:bg-black transition"
+                >
+                <Layers size={16} />
+                  View Variants
+              </Link>
+
+{/* Add Variant */}
+               <Link
+                  href={`/auth/admin/products/${p._id}/variants/add`}
+                  className="flex items-center px-3 py-1 rounded-sm
+                      bg-pink-400 text-white text-sm gap-2 mt-3
+                      hover:bg-pink-600 transition"
+                  >
+                   <Boxes size={16} />
+                    Add Variant
+               </Link>
+
+
+
+
                       </div>
                     </td>
                   )}

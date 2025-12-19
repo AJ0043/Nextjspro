@@ -1,5 +1,8 @@
 import mongoose, { Schema, Document, models, model } from "mongoose";
 
+/* ---------------------------------------
+   Variant Interface
+---------------------------------------- */
 export interface ProductVariantDocument extends Document {
   product: mongoose.Types.ObjectId;
 
@@ -13,10 +16,12 @@ export interface ProductVariantDocument extends Document {
   };
 
   price: number;
-  discount?: number;
+  discount: number;
   finalPrice: number;
 
   stock: number;
+
+  description?: string; // ✅ Added description
 
   images: {
     url: string;
@@ -29,6 +34,9 @@ export interface ProductVariantDocument extends Document {
   updatedAt: Date;
 }
 
+/* ---------------------------------------
+   Variant Schema
+---------------------------------------- */
 const ProductVariantSchema = new Schema<ProductVariantDocument>(
   {
     product: {
@@ -46,31 +54,42 @@ const ProductVariantSchema = new Schema<ProductVariantDocument>(
     },
 
     attributes: {
-      color: String,
-      size: String,
-      storage: String,
+      color: { type: String, trim: true },
+      size: { type: String, trim: true },
+      storage: { type: String, trim: true },
     },
 
     price: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     discount: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     finalPrice: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     stock: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    /* 🔥 MAX 4 IMAGES ONLY */
     images: {
       type: [
         {
@@ -80,9 +99,9 @@ const ProductVariantSchema = new Schema<ProductVariantDocument>(
       ],
       validate: {
         validator: function (arr: any[]) {
-          return arr.length <= 7;
+          return arr.length <= 4;
         },
-        message: "Maximum 7 images allowed per variant",
+        message: "Maximum 4 images allowed per variant",
       },
       default: [],
     },
@@ -93,10 +112,14 @@ const ProductVariantSchema = new Schema<ProductVariantDocument>(
       default: "active",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Prevent Next.js hot-reload error
+/* ---------------------------------------
+   Safe Export (Next.js Hot Reload Fix)
+---------------------------------------- */
 const ProductVariant =
   models.ProductVariant ||
   model<ProductVariantDocument>("ProductVariant", ProductVariantSchema);
