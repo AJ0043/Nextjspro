@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [dark, setDark] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // FETCH USER
+   // FETCH USER
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -45,11 +45,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           credentials: "include",
         });
         const data = await res.json();
+
         if (!data.success) {
           window.location.href = "/auth/login?error=login_required";
           return;
         }
+
         setUser(data.user);
+
+        // ❌ Unauthorized access check
+        if (window.location.pathname.startsWith("/auth/admin") && data.user.role !== "admin") {
+          alert("You are not authorized for admin!");
+          window.location.href = "/website"; // redirect to homepage
+          return;
+        }
+
       } catch (error) {
         window.location.href = "/auth/login?error=login_required";
       }

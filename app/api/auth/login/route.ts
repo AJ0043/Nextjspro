@@ -1,4 +1,3 @@
-// app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -19,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find user with password + role
+    // 🔍 Find user
     const user = await User.findOne({ email }).select("+password +role");
     if (!user) {
       return NextResponse.json(
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Compare password
+    // 🔐 Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -44,36 +43,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create JWT
-   const token = jwt.sign(
-  { id: user._id, role: user.role },
-  process.env.JWT_SECRET!,
-  { expiresIn: "7d" }
-);
+    // 🔑 Create JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // Set cookie
+    // 🍪 Cookie
     const cookie = serialize("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
     });
 
-    // Admin role check
-    if (user.role !== "admin") {
-      return NextResponse.json(
-        { success: false, message: "You are not authorized to access admin" },
-        { status: 403 }
-      );
-    }
+    // 🎯 ROLE BASED REDIRECT
+const redirectUrl =
+  user.role === "admin" ? "/auth/admin" : "/website";
 
-    // Send response with cookie and redirect info
-    const res = NextResponse.json({
-      success: true,
-      message: "Login successful",
-      redirect: "/auth/admin",
-    });
+// 🎯 ROLE BASED MESSAGE
+const welcomeMessage =
+  user.role === "admin"
+    ? "Welcome to Admin Panel"
+    : "Welcome to Emart Ecommerce";
+
+// ✅ RESPONSE
+const res = NextResponse.json({
+  success: true,
+  message: welcomeMessage,
+  redirect: redirectUrl,
+});
 
     res.headers.set("Set-Cookie", cookie);
 

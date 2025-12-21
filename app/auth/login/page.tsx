@@ -12,41 +12,75 @@ import { Eye, EyeOff } from "lucide-react";
 import Buttonloading from "@/components/Application/Buttonloading";
 import { useRouter } from "next/navigation";
 
-// Notification Component
+/* 🔔 Notification */
 const NotificationBar = ({ message, color }: any) => {
   if (!message) return null;
   return (
     <div
-      className={`fixed top-5 left-1/2 transform -translate-x-1/2 
-        px-6 py-3 rounded-xl shadow-lg text-white font-medium z-50
-        ${color === "green" ? "bg-green-600" : "bg-red-600"}`}
+      className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl
+      shadow-lg text-white font-medium z-50
+      ${color === "green" ? "bg-green-600" : "bg-red-600"}`}
     >
       {message}
     </div>
   );
 };
 
-const Login = () => {
+export default function Login() {
   const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState({ message: "", color: "" });
+  const [notification, setNotification] = useState({
+    message: "",
+    color: "",
+  });
 
-  // ⭐ AUTO LOAD LOGOUT MESSAGE
+  /* ✅ CHECK LOGIN STATUS ON PAGE LOAD */
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (data?.success && data?.user?.role) {
+          router.replace(
+            data.user.role === "admin"
+              ? "/admin/dashboard"
+              : "/website"
+          );
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    checkAuth();
+
     const msg = localStorage.getItem("logout_msg");
     if (msg) {
       setNotification({ message: msg, color: "green" });
-      localStorage.removeItem("logout_msg"); // Remove so it doesn't show again
+      localStorage.removeItem("logout_msg");
     }
-  }, []);
+  }, [router]);
 
-  const { register, handleSubmit, formState: { errors } } =
-    useForm<LoginInput>({
-      resolver: zodResolver(loginSchema),
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
 
+  /* 🔐 LOGIN SUBMIT */
   const onSubmit = async (data: LoginInput) => {
+    if (isLoading) return;
+
     setIsLoading(true);
     setNotification({ message: "", color: "" });
 
@@ -54,30 +88,31 @@ const Login = () => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
 
       const result = await res.json();
-      console.log("Login Result →", result);
 
-      if (!result.success) {
-        setNotification({ message: result.message, color: "red" });
-        setIsLoading(false);
+      if (!res.ok || !result.success) {
+        setNotification({
+          message: result?.message || "Invalid credentials",
+          color: "red",
+        });
         return;
       }
 
-      // Success Message
-      setNotification({ message: "Login successful!", color: "green" });
+      setNotification({
+        message: result.message,
+        color: "green",
+      });
 
-      // Redirect based on backend response
       setTimeout(() => {
         router.replace(result.redirect);
-      }, 600);
-
-    } catch (error) {
-      console.error(error);
+      }, 700);
+    } catch {
       setNotification({
-        message: "Something went wrong, try again.",
+        message: "Server error, try again",
         color: "red",
       });
     } finally {
@@ -87,30 +122,37 @@ const Login = () => {
 
   return (
     <>
-      <NotificationBar message={notification.message} color={notification.color} />
+      <NotificationBar
+        message={notification.message}
+        color={notification.color}
+      />
 
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9ff] px-3">
-        <Card className="w-full max-w-md p-8 shadow-lg border border-gray-200 rounded-2xl bg-white">
+        <Card className="w-full max-w-md p-8 shadow-lg rounded-2xl">
           <CardContent className="p-0">
             <div className="flex justify-center mb-4">
-              <Image src={Logo} alt="App Logo" width={150} height={250} />
+              <Image src={Logo} alt="Logo" width={150} />
             </div>
 
-            <h1 className="text-center text-3xl font-bold mb-4">Login to your Account</h1>
+            <h1 className="text-center text-3xl font-bold mb-6">
+              Login to your Account
+            </h1>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-              
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col gap-4"
+            >
               {/* Email */}
               <div>
                 <label className="text-sm font-semibold">Email</label>
                 <input
-                  type="email"
                   {...register("email")}
+                  type="email"
                   placeholder="example@gmail.com"
                   className="w-full mt-1 p-2.5 rounded-lg border bg-gray-50"
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm">
                     {errors.email.message}
                   </p>
                 )}
@@ -120,47 +162,47 @@ const Login = () => {
               <div className="relative">
                 <label className="text-sm font-semibold">Password</label>
                 <input
-                  type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  placeholder="********"
+                  type={showPassword ? "text" : "password"}
                   className="w-full mt-1 p-2.5 pr-10 rounded-lg border bg-gray-50"
                 />
                 <button
                   type="button"
+                  className="absolute right-3 top-[36px]"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[35px]"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff /> : <Eye />}
                 </button>
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm">
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
-              {/* Forgot Password */}
-              <div className="text-right -mt-2">
+              <div className="text-right">
                 <Link
                   href="/auth/forgotpassword"
-                  className="text-sm text-purple-600 font-semibold hover:underline"
+                  className="text-sm text-purple-600 font-semibold"
                 >
                   Forgot Password?
                 </Link>
               </div>
 
-              {/* Login Button */}
               <Buttonloading
                 isLoading={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg"
+                className="w-full bg-purple-600 text-white py-3 rounded-lg"
               >
                 Login
               </Buttonloading>
             </form>
 
-            <p className="text-center text-gray-700 mt-6">
+            <p className="text-center mt-6">
               Don’t have an account?{" "}
-              <Link href="/auth/Sign-up" className="text-purple-600 font-semibold">
+              <Link
+                href="/auth/Sign-up"
+                className="text-purple-600 font-semibold"
+              >
                 Create Account
               </Link>
             </p>
@@ -169,6 +211,4 @@ const Login = () => {
       </div>
     </>
   );
-};
-
-export default Login;
+}
