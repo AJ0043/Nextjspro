@@ -1,4 +1,5 @@
 import WebsiteHeader from "@/components/WebsiteHeader";
+import Footer from "@/components/footer";
 
 export default function WebsiteLayout({
   children,
@@ -8,7 +9,10 @@ export default function WebsiteLayout({
   return (
     <>
       <WebsiteHeader />
+      
       {children}
+      
+      <Footer />
     </>
   );
 }

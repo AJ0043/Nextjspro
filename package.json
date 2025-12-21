@@ -20,6 +20,7 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@rpldy/uploady": "^1.13.0",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",
     "chart.js": "^4.5.1",
