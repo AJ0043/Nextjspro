@@ -56,7 +56,7 @@ export default function Page() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.products) {
-          setFeaturedProducts(data.products.slice(0, 9));
+          setFeaturedProducts(data.products.slice(0, 8));
         }
       })
       .catch(console.error);
