@@ -136,7 +136,7 @@ export default function AdminProducts() {
           placeholder="Product Title"
           value={form.title}
           onChange={handleChange}
-          className="border p-3 rounded w-full bg-amber-50"
+          className="border p-3 rounded w-full bg-amber-50  text-amber-950"
           required
         />
         <input
@@ -145,7 +145,7 @@ export default function AdminProducts() {
           placeholder="Slug"
           value={form.slug}
           onChange={handleChange}
-          className="border p-3 rounded w-full bg-amber-50"
+          className="border p-3 rounded w-full bg-amber-50 text-amber-950"
           required
         />
 
@@ -156,7 +156,7 @@ export default function AdminProducts() {
             placeholder="Price"
             value={form.price}
             onChange={handleChange}
-            className="border p-3 rounded w-full bg-amber-50"
+            className="border p-3 rounded w-full bg-amber-50 text-amber-950"
             required
           />
           <input
@@ -165,7 +165,7 @@ export default function AdminProducts() {
             placeholder="Discount (%)"
             value={form.discount}
             onChange={handleChange}
-            className="border p-3 rounded w-full bg-amber-50"
+            className="border p-3 rounded w-full bg-amber-50 text-amber-950"
           />
         </div>
 
@@ -174,7 +174,7 @@ export default function AdminProducts() {
           placeholder="Description"
           value={form.description}
           onChange={handleChange}
-          className="border p-3 rounded w-full bg-amber-50"
+          className="border p-3 rounded w-full bg-amber-50 text-amber-950"
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -184,14 +184,14 @@ export default function AdminProducts() {
             placeholder="Stock"
             value={form.stock}
             onChange={handleChange}
-            className="border p-3 rounded w-full bg-amber-50"
+            className="border p-3 rounded w-full bg-amber-50 text-amber-950"
             required
           />
-          <select
+          <select 
             name="category"
             value={form.category}
             onChange={handleChange}
-            className="border p-3 rounded w-full bg-amber-50"
+            className="border p-3 rounded w-full bg-amber-50 text-amber-950"
             required
           >
             <option value="">Select Category</option>
@@ -209,7 +209,7 @@ export default function AdminProducts() {
           className="border p-4 rounded bg-amber-50 cursor-pointer text-center"
         >
           <input {...getInputProps()} />
-          <p>Click the box or drag & drop images here</p>
+          <p className="text-orange-700">Click the box or drag & drop images here</p>
           <button type="button" onClick={open} className="mt-2 px-3 py-1 bg-purple-600 text-white rounded">
             Select Images
           </button>
@@ -275,17 +275,17 @@ export default function AdminProducts() {
                     "No Image"
                   )}
                 </td>
-                <td className="border px-3 py-2">{p.title}</td>
-                <td className="border px-3 py-2">{p.slug}</td>
-                <td className="border px-3 py-2">{p.category?.title}</td>
-                <td className="border px-3 py-2">{p.price}</td>
-                <td className="border px-3 py-2">{p.discount}%</td>
-                <td className="border px-3 py-2">{p.finalPrice}</td>
-                <td className="border px-3 py-2">{p.stock}</td>
-                <td className="border px-3 py-2">
+                <td className="border px-3 py-2 text-teal-800">{p.title}</td>
+                <td className="border px-3 py-2 text-lime-800">{p.slug}</td>
+                <td className="border px-3 py-2 text-purple-800">{p.category?.title}</td>
+                <td className="border px-3 py-2 text-red-800">{p.price}</td>
+                <td className="border px-3 py-2 text-sky-800">{p.discount}%</td>
+                <td className="border px-3 py-2 text-orange-800">{p.finalPrice}</td>
+                <td className="border px-3 py-2 text-black">{p.stock}</td>
+                <td className="border px-3 py-2 text-gray-800">
                   {new Date(p.createdAt).toLocaleString()}
                 </td>
-                <td className="border px-3 py-2">
+                <td className="border px-3 py-2 text-gray-900">
                   {new Date(p.updatedAt).toLocaleString()}
                 </td>
               </tr>

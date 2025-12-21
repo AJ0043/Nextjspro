@@ -375,20 +375,20 @@ const handleUpdate = async () => {
                       )}
                     </td>
                   )}
-                  {columnVisibility.title && <td className="p-2 font-semibold">{p.title}</td>}
-                  {columnVisibility.slug && <td className="p-2">{p.slug}</td>}
-                  {columnVisibility.category && <td className="p-2">{p.category?.name || "-"}</td>}
-                  {columnVisibility.price && <td className="p-2 text-center">₹{p.price}</td>}
-                  {columnVisibility.discount && <td className="p-2 text-center">{p.discount || 0}%</td>}
+                  {columnVisibility.title && <td className="p-2 font-semibold text-amber-950">{p.title}</td>}
+                  {columnVisibility.slug && <td className="p-2 text-teal-700">{p.slug}</td>}
+                  {columnVisibility.category && <td className="p-2 text-orange-800">{p.category?.name || "-"}</td>}
+                  {columnVisibility.price && <td className="p-2 text-center text-purple-950">₹{p.price}</td>}
+                  {columnVisibility.discount && <td className="p-2 text-center text-sky-700">{p.discount || 0}%</td>}
                   {columnVisibility.final && (
                     <td className="p-2 text-center font-semibold text-green-700">₹{p.finalPrice}</td>
                   )}
-                  {columnVisibility.stock && <td className="p-2 text-center">{p.stock}</td>}
+                  {columnVisibility.stock && <td className="p-2 text-center text-amber-900">{p.stock}</td>}
                   {columnVisibility.created && (
-                    <td className="p-2 text-center">{p.createdAt && new Date(p.createdAt).toLocaleString("en-IN")}</td>
+                    <td className="p-2 text-center text-red-900">{p.createdAt && new Date(p.createdAt).toLocaleString("en-IN")}</td>
                   )}
                   {columnVisibility.updated && (
-                    <td className="p-2 text-center">{p.updatedAt && new Date(p.updatedAt).toLocaleString("en-IN")}</td>
+                    <td className="p-2 text-center text-blue-900">{p.updatedAt && new Date(p.updatedAt).toLocaleString("en-IN")}</td>
                   )}
                   {columnVisibility.action && (
                     <td className="p-2 flex gap-2 justify-center flex-wrap">
