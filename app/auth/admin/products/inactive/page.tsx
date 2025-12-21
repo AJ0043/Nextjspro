@@ -182,15 +182,15 @@ export default function InactiveProductsPage() {
                       )}
                     </td>
 
-                    <td className="p-3 font-semibold">{p.title}</td>
+                    <td className="p-3 font-semibold text-amber-950">{p.title}</td>
 
-                    <td className="p-3 text-center">₹{p.price}</td>
+                    <td className="p-3 text-center text-amber-950">₹{p.price}</td>
 
                     <td className="p-3 text-center font-bold text-green-700">
                       ₹{p.finalPrice}
                     </td>
 
-                    <td className="p-3 text-center font-semibold">
+                    <td className="p-3 text-center font-semibold text-amber-950">
                       {p.deletedAt
                         ? new Date(p.deletedAt).toLocaleString("en-IN")
                         : "-"}

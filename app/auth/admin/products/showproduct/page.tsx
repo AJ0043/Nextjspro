@@ -613,7 +613,7 @@ const handleUpdate = async () => {
         <input
           type="file"
           accept="image/*"
-          className="w-full border rounded px-3 py-2 bg-white"
+          className="w-full border rounded px-3 py-2 bg-white text-amber-700"
           onChange={(e) =>
             setEditProduct({
               ...editProduct,
@@ -621,23 +621,25 @@ const handleUpdate = async () => {
             })
           }
         />
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-gray-800 text-center">
           Upload new image to replace existing one
         </p>
       </div>
 
       {/* Right Form */}
-      <div className="md:w-1/2 w-full p-6 flex flex-col gap-4 border-l md:border-l-2 border-gray-200">
+      <div className="md:w-1/2 w-full p-6 flex flex-col gap-4 border-l md:border-l-2 border-gray-200 text-amber-950">
         <h2 className="text-2xl font-bold text-teal-800 mb-4">Edit Product</h2>
 
         {[
           {
-            label: "Title",
-            value: editProduct.title,
-            type: "text" as const,
-            onChange: (v: string) =>
-              setEditProduct({ ...editProduct, title: v }),
-          },
+           label: "Title",
+           value: editProduct.title,
+           type: "text" as const,
+           className: "text-red-500 border-red-500", // 👈 RED
+          onChange: (v: string) =>
+          setEditProduct({ ...editProduct, title: v }),
+         },
+
           {
             label: "Slug",
             value: editProduct.slug,
@@ -691,7 +693,7 @@ const handleUpdate = async () => {
             </label>
             {field.type === "textarea" ? (
               <textarea
-                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300 text-amber-950"
                 value={field.value}
                 onChange={(e) =>
                   field.onChange(e.target.value)
@@ -700,7 +702,7 @@ const handleUpdate = async () => {
             ) : (
               <input
                 type={field.type}
-                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                className="border px-3 py-2 flex-1 rounded hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-300 text-amber-950"
                 value={field.value}
                 onChange={(e) =>
                   field.type === "number"

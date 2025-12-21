@@ -107,7 +107,7 @@ export default function CouponsPage() {
         <p>No coupons found</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse text-amber-900">
             <thead>
               <tr className="bg-amber-200">
                 <th className="p-3 border">Code</th>

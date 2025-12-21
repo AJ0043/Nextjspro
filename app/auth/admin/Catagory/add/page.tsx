@@ -264,7 +264,7 @@ export default function CategoryPage() {
     <div className="p-4 bg-amber-100 min-h-screen rounded-2xl">
       {/* HEADER */}
       <div className="flex justify-between mb-4">
-        <h1 className="text-xl font-semibold">Categories</h1>
+        <h1 className="text-xl font-semibold text-green-800">Categories</h1>
         <div className="flex gap-2">
           <button
             onClick={exportCSV}
@@ -289,7 +289,7 @@ export default function CategoryPage() {
 
       {/* SEARCH */}
       <input
-        className="w-full mb-3 p-2 border rounded bg-white"
+        className="w-full mb-3 p-2 border rounded bg-white text-amber-950"
         placeholder="Search category..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -313,7 +313,7 @@ export default function CategoryPage() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded shadow overflow-x-auto">
+      <div className="bg-lime-300 rounded shadow overflow-x-auto text-amber-950">
         <table className="w-full text-sm">
           <thead className="bg-purple-600">
             {table.getHeaderGroups().map((hg) => (
@@ -364,19 +364,19 @@ export default function CategoryPage() {
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="border px-3 py-1 rounded disabled:opacity-50 cursor-pointer bg-lime-700"
+            className="border px-3 py-1 rounded disabled:opacity-50 cursor-pointer bg-lime-700 text-amber-50"
           >
             Prev
           </button>
 
-          <span className="text-sm">
+          <span className="text-sm text-amber-950">
             Page {pagination.pageIndex + 1} of {table.getPageCount()}
           </span>
 
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="border px-3 py-1 rounded disabled:opacity-50 cursor-pointer bg-amber-700"
+            className="border px-3 py-1 rounded disabled:opacity-50 cursor-pointer bg-amber-700 text-amber-950"
           >
             Next
           </button>
@@ -393,19 +393,19 @@ export default function CategoryPage() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="border p-2 w-full"
+              className="border p-2 w-full text-amber-950"
               placeholder="Title"
             />
             <input
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              className="border p-2 w-full"
+              className="border p-2 w-full text-amber-950"
               placeholder="Slug"
             />
             <select
               value={parent}
               onChange={(e) => setParent(e.target.value)}
-              className="border p-2 w-full cursor-pointer"
+              className="border p-2 w-full cursor-pointer text-amber-950"
             >
               <option value="">Main Category</option>
               {categories
@@ -421,7 +421,7 @@ export default function CategoryPage() {
               <button
                 type="button"
                 onClick={() => setModalType(null)}
-                className="border px-4 py-1 rounded cursor-pointer"
+                className="border px-4 py-1 rounded cursor-pointer bg-red-700"
               >
                 Cancel
               </button>

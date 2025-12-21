@@ -113,7 +113,7 @@ export default function AddCouponPage() {
           <div>
             <label className={label}>
               Discount Value *
-              <span className="ml-2 text-gray-500 text-sm">
+              <span className="ml-2 text-gray-500 text-sm text-amber-950">
                 ({form.discountType === "percentage" ? "%" : "₹"})
               </span>
             </label>
@@ -229,7 +229,7 @@ export default function AddCouponPage() {
           </thead>
           <tbody>
             {coupons.map((c) => (
-              <tr key={c._id} className="hover:bg-gray-50">
+              <tr key={c._id} className="hover:bg-gray-50 text-amber-950">
                 <td className="p-3 border">{c.code}</td>
                 <td className="p-3 border">
                   {c.discountValue} {c.discountType === "percentage" ? "%" : "₹"}

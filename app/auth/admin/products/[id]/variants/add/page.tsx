@@ -142,7 +142,7 @@ export default function ProductVariantsPage() {
       <form onSubmit={submitHandler} className="bg-amber-50 p-8 rounded-sm shadow border grid md:grid-cols-5 gap-6">
         <h2 className="md:col-span-5 text-2xl font-serif text-indigo-700">➕ Add Variant</h2>
 
-        <div className="md:col-span-2 space-y-4">
+        <div className="md:col-span-2 space-y-4 text-amber-900">
           <input name="sku" placeholder="SKU" className={input} value={form.sku} onChange={handleChange} required />
           <input name="color" placeholder="Color" className={input} value={form.color} onChange={handleChange} />
           <input name="price" type="number" placeholder="Price" className={input} value={form.price} onChange={handleChange} required />
@@ -150,7 +150,7 @@ export default function ProductVariantsPage() {
           <p className="font-semibold">Final Price: <span className="text-green-600">₹{finalPrice}</span></p>
         </div>
 
-        <div className="md:col-span-3 space-y-4">
+        <div className="md:col-span-3 space-y-4 text-amber-950">
           <input name="stock" type="number" placeholder="Stock" className={input} value={form.stock} onChange={handleChange} />
           <select name="size" className={input} value={form.size} onChange={handleChange} required>
             <option value="">Select Size</option>
@@ -203,7 +203,7 @@ export default function ProductVariantsPage() {
             </thead>
             <tbody>
               {variants.map((v) => (
-                <tr key={v._id} className="hover:bg-gray-50">
+                <tr key={v._id} className="hover:bg-gray-50 text-orange-400">
                   <td className={td}>{v.sku}</td>
                   <td className={td}>{v.attributes.color || "-"}</td>
                   <td className={td}>{v.attributes.size}</td>

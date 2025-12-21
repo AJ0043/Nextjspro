@@ -134,7 +134,7 @@ export default function UsersPage() {
           <tbody>
             {paginatedUsers.length > 0 ? (
               paginatedUsers.map((u) => (
-                <tr key={u._id} className="hover:bg-gray-50">
+                <tr key={u._id} className="hover:bg-gray-50 text-amber-950">
                   <td className={td}>{u.name}</td>
                   <td className={td}>{u.email}</td>
                   <td className={td}>{u.phone || "-"}</td>

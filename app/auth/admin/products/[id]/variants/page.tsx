@@ -218,8 +218,8 @@ export default function VariantsTablePage() {
       {selected && mode && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white p-6 rounded-xl max-w-[500px] w-full shadow-lg overflow-y-auto max-h-[90vh] relative">
-            <button onClick={()=>{setSelected(null); setMode(null)}} className="absolute top-3 right-3 cursor-pointer"><X size={20}/></button>
-            <h3 className="text-2xl font-bold mb-4 text-center capitalize">{mode} Variant</h3>
+            <button onClick={()=>{setSelected(null); setMode(null)}} className="absolute top-3 right-3 cursor-pointer text-red-900"><X size={20}/></button>
+            <h3 className="text-2xl font-serif mb-4 text-center capitalize text-blue-800">{mode} Variant</h3>
 
             {mode === "view" ? (
               <>
@@ -228,7 +228,7 @@ export default function VariantsTablePage() {
                     <img key={i} src={img.url} className="h-24 w-24 object-cover rounded border cursor-pointer" onClick={()=>setZoomImage(img.url)} />
                   ))}
                 </div>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm text-amber-700">
                   <p><b>SKU:</b> {selected.sku}</p>
                   <p><b>Color:</b> {selected.attributes.color || "-"}</p>
                   <p><b>Size:</b> {selected.attributes.size}</p>
@@ -240,7 +240,7 @@ export default function VariantsTablePage() {
                 </div>
               </>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 text-amber-900">
                 <input className={input} value={selected.sku} onChange={e=>setSelected({...selected, sku:e.target.value})} />
                 <input className={input} value={selected.attributes.color||""} onChange={e=>setSelected({...selected, attributes:{...selected.attributes, color:e.target.value}})} />
                 <input className={input} value={selected.attributes.size} onChange={e=>setSelected({...selected, attributes:{...selected.attributes, size:e.target.value}})} />
@@ -268,7 +268,7 @@ export default function VariantsTablePage() {
 
 /* ---------------- STYLES ---------------- */
 const th = "px-4 py-3 border text-left font-semibold";
-const td = "px-4 py-3 border";
+const td = "px-4 py-3 border text-sky-900 ";
 const btnGray = "bg-gray-700 text-white px-2 py-2 rounded hover:bg-gray-800";
 const btnBlue = "bg-blue-600 text-white px-2 py-2 rounded hover:bg-blue-700";
 const btnRed = "bg-red-600 text-white px-2 py-2 rounded hover:bg-red-700";
