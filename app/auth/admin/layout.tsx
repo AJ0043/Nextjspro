@@ -138,11 +138,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {open && <ChevronDown className={`${openProducts ? "rotate-180" : ""} transition`} />}
             </button>
             {openProducts && open && (
-              <div className="ml-10 space-y-2 mt-2">
-                <Link href="/auth/admin/products/add" className="flex items-center gap-2 hover:text-purple-600">
+              <div className="ml-10 space-y-3 mt-4">
+                <Link href="/auth/admin/products/add" className="flex items-center gap-5 hover:text-purple-600">
                   <PackagePlus size={18} className="text-purple-600" /> Add Product
                 </Link>
-                <Link href="/auth/admin/products/showproduct" className="flex items-center gap-2 hover:text-purple-600">
+                <Link href="/auth/admin/products/showproduct" className="flex items-center gap-5 hover:text-purple-600">
                   <Boxes size={18} className="text-purple-600" /> All Product
                 </Link>
               </div>

@@ -1,6 +1,5 @@
-// app/api/products/[id]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connect from "@/lib/databaseConnection";
 import Product from "@/models/product.model";
 import uploadToCloudinary from "@/lib/cloudinary";
@@ -17,14 +16,16 @@ export async function GET(
 
     const { id } = await params;
 
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { success: false, message: "Product ID required" },
+        { success: false, message: "Invalid Product ID" },
         { status: 400 }
       );
     }
 
-    const product = await Product.findById(id).populate("category");
+    const product = await Product.findById(id)
+      .populate("category")
+      .lean();
 
     if (!product) {
       return NextResponse.json(
@@ -37,14 +38,14 @@ export async function GET(
   } catch (err: any) {
     console.error("GET PRODUCT ERROR:", err);
     return NextResponse.json(
-      { success: false, message: err.message },
+      { success: false, message: "Failed to fetch product" },
       { status: 500 }
     );
   }
 }
 
 /* =========================================================
-   UPDATE PRODUCT (JSON + IMAGE UPLOAD)
+   UPDATE PRODUCT (JSON / FORM-DATA)
 ========================================================= */
 export async function PUT(
   req: NextRequest,
@@ -52,13 +53,11 @@ export async function PUT(
 ) {
   try {
     await connect();
-
-    // ✅ Next.js 15+ fix
     const { id } = await params;
 
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { success: false, message: "Product ID required" },
+        { success: false, message: "Invalid Product ID" },
         { status: 400 }
       );
     }
@@ -66,7 +65,7 @@ export async function PUT(
     let data: any = {};
     const contentType = req.headers.get("content-type") || "";
 
-    /* ---------- FORM DATA (IMAGE UPDATE) ---------- */
+    /* ---------- FORM DATA ---------- */
     if (contentType.includes("multipart/form-data")) {
       const form = await req.formData();
 
@@ -81,8 +80,11 @@ export async function PUT(
       if (title) data.title = title.toString();
       if (slug) data.slug = slug.toString();
       if (description) data.description = description.toString();
-      if (category && category.toString().length > 0)
-        data.category = category.toString();
+
+      // ✅ FIXED CATEGORY
+      if (category && category.toString().length > 0) {
+        data.category = new mongoose.Types.ObjectId(category.toString());
+      }
 
       if (price) data.price = Number(price);
       if (discount) data.discount = Number(discount);
@@ -93,7 +95,6 @@ export async function PUT(
 
       if (image instanceof File && image.size > 0) {
         const upload = await uploadToCloudinary(image);
-
         data.images = [
           {
             url: upload.secure_url,
@@ -103,13 +104,15 @@ export async function PUT(
       }
     }
 
-    /* ---------- JSON UPDATE ---------- */
+    /* ---------- JSON ---------- */
     else if (contentType.includes("application/json")) {
       data = await req.json();
-    }
 
-    /* ---------- UNSUPPORTED ---------- */
-    else {
+      // ✅ FIX CATEGORY FROM JSON
+      if (data.category) {
+        data.category = new mongoose.Types.ObjectId(data.category);
+      }
+    } else {
       return NextResponse.json(
         { success: false, message: "Unsupported Content-Type" },
         { status: 400 }
@@ -117,9 +120,11 @@ export async function PUT(
     }
 
     /* ---------- FINAL PRICE ---------- */
-    if (data.price !== undefined && data.discount !== undefined) {
-      data.finalPrice =
-        data.price - (data.price * (data.discount || 0)) / 100;
+    if (data.price !== undefined) {
+      const discount = data.discount || 0;
+      data.finalPrice = Math.round(
+        data.price - (data.price * discount) / 100
+      );
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(id, data, {
@@ -141,7 +146,7 @@ export async function PUT(
   } catch (err: any) {
     console.error("UPDATE PRODUCT ERROR:", err);
     return NextResponse.json(
-      { success: false, message: err.message },
+      { success: false, message: "Product update failed" },
       { status: 500 }
     );
   }
@@ -156,12 +161,11 @@ export async function DELETE(
 ) {
   try {
     await connect();
-
     const { id } = await params;
 
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { success: false, message: "Product ID required" },
+        { success: false, message: "Invalid Product ID" },
         { status: 400 }
       );
     }
@@ -182,7 +186,7 @@ export async function DELETE(
   } catch (err: any) {
     console.error("DELETE PRODUCT ERROR:", err);
     return NextResponse.json(
-      { success: false, message: err.message },
+      { success: false, message: "Product delete failed" },
       { status: 500 }
     );
   }

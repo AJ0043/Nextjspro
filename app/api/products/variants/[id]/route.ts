@@ -1,3 +1,4 @@
+/* products/varients/[id]/route.ts */
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/databaseConnection";

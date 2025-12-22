@@ -6,7 +6,15 @@ import {
   LogOut,
   Menu,
   X,
+  Heart,
+  ListOrdered,
+  PackagePlus,
+  LogIn,
+  ChevronDown,
   LayoutDashboard,
+  Home,
+  Info,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,56 +26,49 @@ interface UserType {
   role?: "user" | "admin";
 }
 
-interface Category {
-  _id: string;
-  title: string;
-  slug: string;
-}
-
 export default function Header() {
   const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [user, setUser] = useState<UserType | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [userDropdown, setUserDropdown] = useState(false);
+  const [cartCount] = useState(3); // demo
 
-  // 🔹 Fetch user
+  const navLinks = [
+    { label: "Home", href: "http://localhost:3000/website" },
+    { label: "Cargo", href: "/website/category/Cargo" },
+    { label: "Watch", href: "/website/category/Watch" },
+    { label: "Women", href: "/website/category/Women" },
+    { label: "Guns", href: "/website/category/guns" },
+    { label: "Mens", href: "/website/category/Men" },
+    { label: "Electronics", href: "/website/category/electronics" },
+    { label: "LuggageBags", href: "/website/category/Bags" },
+    { label: "KitchenWare", href: "/category/kitchenware" },
+    { label: "Shoes", href: "/category/shoes" },
+    { label: "Cap", href: "/category/cap" },
+    { label: "Product", href: "/products" },
+    { label: "NewProduct", href: "/products/new" },
+    { label: "About", href: "/about" },
+  ];
+
+  /* ================= FETCH USER ================= */
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-        const data = await res.json();
-        data.success ? setUser(data.user) : setUser(null);
-      } catch {
-        setUser(null);
-      }
-    };
-    fetchUser();
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => (d.success ? setUser(d.user) : setUser(null)))
+      .catch(() => setUser(null));
   }, []);
 
-  // 🔹 Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("/api/category");
-        const data = await res.json();
-        setCategories(data.categories || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  // 🔹 Logout
+  /* ================= LOGOUT ================= */
   const handleLogout = async () => {
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
     });
     setUser(null);
+    setMenuOpen(false);
+    setUserDropdown(false);
     router.push("/auth/login");
   };
 
@@ -75,169 +76,220 @@ export default function Header() {
     <>
       {/* ================= HEADER ================= */}
       <header className="w-full bg-amber-50 border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+
+          {/* MOBILE MENU BTN */}
+          <button onClick={() => setMenuOpen(true)} className="md:hidden">
+            <Menu size={28} />
+          </button>
 
           {/* LOGO */}
-          <Link href="/website" className="shrink-0">
-            <Image
-              src="/estore.webp"
-              alt="E-Store Logo"
-              width={120}
-              height={120}
-              priority
-              className="object-contain"
-            />
+          <Link href="/website">
+            <Image src="/estore.webp" alt="E-Store" width={110} height={110} />
           </Link>
 
-          {/* SEARCH (DESKTOP) */}
+          {/* SEARCH */}
           <div className="hidden md:flex flex-1 max-w-xl">
             <input
-              type="text"
-              placeholder="Search products..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-5 py-3 text-[16px] border rounded-full outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Search products..."
+              className="w-full px-5 py-3 border rounded-full"
             />
           </div>
 
           {/* RIGHT ICONS */}
-          <div className="flex items-center gap-5">
-            {/* CART */}
-            <button
-              onClick={() => router.push("/cart")}
-              className="relative cursor-pointer"
-            >
-              <ShoppingCart size={26} />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                0
-              </span>
-            </button>
+          <div className="flex items-center gap-4">
 
-            {/* USER */}
-            {user ? (
-              <div className="hidden md:flex items-center gap-4">
-                <span className="font-semibold text-[16px]">
-                  Hi, <span className="text-purple-600">{user.name}</span>
-                </span>
-
-                {user.role === "admin" && (
-                  <button
-                    onClick={() => router.push("/admin/dashboard")}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-sm hover:bg-purple-800 cursor-pointer"
-                  >
-                    <LayoutDashboard size={18} />
-                    Dashboard
-                  </button>
-                )}
-
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600 cursor-pointer"
-                >
-                  <LogOut size={18} />
-                  Logout
-                </button>
-              </div>
-            ) : (
+            {/* ADMIN DASHBOARD */}
+            {user?.role === "admin" && (
               <button
-                onClick={() => router.push("/auth/login")}
-                className="hidden md:block cursor-pointer"
+                onClick={() => router.push("/admin/dashboard")}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
               >
-                <User size={26} />
+                <LayoutDashboard size={18} />
+                Dashboard
               </button>
             )}
 
-            {/* HAMBURGER */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden cursor-pointer"
-            >
-              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            {/* CART */}
+            <button onClick={() => router.push("/cart")} className="relative">
+              <ShoppingCart size={26} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
             </button>
+
+            {/* USER DROPDOWN */}
+            <div className="relative hidden md:block">
+              <button
+                onClick={() => setUserDropdown(!userDropdown)}
+                className="flex items-center gap-1"
+              >
+                <User size={26} />
+                <ChevronDown size={18} />
+              </button>
+
+              {userDropdown && (
+                <div className="absolute right-0 mt-3 w-60 bg-white border rounded-lg shadow-xl z-50">
+                  <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l border-t rotate-45" />
+
+                  {user ? (
+                    <>
+                      <div className="px-4 py-3 font-semibold border-b bg-gray-50">
+                        Hi, <span className="text-purple-600">{user.name}</span>
+                      </div>
+
+                      <DropdownItem href="/cart" icon={<ShoppingCart size={18} />} label="Cart" />
+                      <DropdownItem href="/wishlist" icon={<Heart size={18} />} label="Wishlist" />
+                      <DropdownItem href="/orders" icon={<ListOrdered size={18} />} label="Orders" />
+                      <DropdownItem href="/Review" icon={<Star size={18} />} label="Reviews" />
+
+                      {user.role === "admin" && (
+                        <>
+                          <DropdownItem href="/admin/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
+                          <DropdownItem href="/admin/products/new" icon={<PackagePlus size={18} />} label="New Product" />
+                        </>
+                      )}
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 border-t"
+                      >
+                        <LogOut size={18} /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <DropdownItem href="/auth/login" icon={<LogIn size={18} />} label="Login" />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ================= DESKTOP NAV ================= */}
-      <nav className="hidden md:block bg-purple-500 border-b">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-center gap-10 text-[16px] font-serif text-white">
-          <Link href="/" className="hover:text-purple-600">Home</Link>
-          {categories.map((cat) => (
-            <Link
-              key={cat._id}
-              href={`/category/${cat.slug}`}
-              className="hover:text-yellow-300"
-            >
-              {cat.title}
-            </Link>
-          ))}
-          <Link href="/about" className="hover:text-purple-600">About</Link>
-        </div>
-      </nav>
+      {/* ================= MOBILE SLIDER ================= */}
+      <div className={`fixed inset-0 z-50 md:hidden ${menuOpen ? "visible" : "invisible"}`}>
+        {/* OVERLAY */}
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity ${menuOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setMenuOpen(false)}
+        />
 
-      {/* ================= MOBILE MENU ================= */}
-      {menuOpen && (
-        <div className="md:hidden bg-purple-500 border-b px-4 py-4 space-y-4 text-amber-50">
-          {/* MOBILE SEARCH */}
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg outline-none"
-          />
-
-          {/* NAV LINKS */}
-          <div className="flex flex-col gap-3 font-medium text-amber-50">
-            <Link href="/" onClick={() => setMenuOpen(false)}>Home</Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/category/${cat.slug}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                {cat.title}
-              </Link>
-            ))}
-            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
+        {/* DRAWER */}
+        <div
+          className={`absolute left-0 top-0 h-full w-72 bg-white transition-transform duration-300 overflow-y-auto`}
+          style={{ maxHeight: "100vh" }}
+        >
+          {/* HEADER */}
+          <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
+            <h2 className="font-bold text-lg">Menu</h2>
+            <X onClick={() => setMenuOpen(false)} className="cursor-pointer" />
           </div>
 
-          {/* USER ACTIONS */}
-          {user ? (
-            <div className="pt-4 border-t space-y-3">
-              <p className="font-semibold">
-                Hi, <span className="text-purple-600">{user.name}</span>
-              </p>
+          {/* SEARCH */}
+          <div className="p-4 border-b">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products..."
+              className="w-full px-4 py-2 border rounded"
+            />
+          </div>
 
-              {user.role === "admin" && (
+          {/* NAV LINKS */}
+          <div className="divide-y">
+            {navLinks.map((link) => (
+              <MobileItem key={link.href} label={link.label} href={link.href} />
+            ))}
+          </div>
+
+          {/* USER LINKS */}
+          <div className="border-t mt-4 divide-y">
+            {user ? (
+              <>
+                <div className="px-4 py-3 font-semibold">Hi, {user.name}</div>
+
+                <MobileItem icon={<ShoppingCart size={18} />} label="Cart" href="/cart" />
+                <MobileItem icon={<Heart size={18} />} label="Wishlist" href="/wishlist" />
+                <MobileItem icon={<ListOrdered size={18} />} label="Orders" href="/orders" />
+
+                {user.role === "admin" && (
+                  <>
+                    <MobileItem icon={<LayoutDashboard size={18} />} label="Dashboard" href="/admin/dashboard" />
+                    <MobileItem icon={<PackagePlus size={18} />} label="New Product" href="/admin/products/new" />
+                  </>
+                )}
+
                 <button
-                  onClick={() => router.push("/admin/dashboard")}
-                  className="w-full flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-sm"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600"
                 >
-                  <LayoutDashboard size={18} />
-                  Dashboard
+                  <LogOut size={18} /> Logout
                 </button>
-              )}
-
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg"
-              >
-                <LogOut size={18} />
-                Logout
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push("/auth/login")}
-              className="w-full flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg"
-            >
-              <User size={18} />
-              Login
-            </button>
-          )}
+              </>
+            ) : (
+              <MobileItem icon={<LogIn size={18} />} label="Login" href="/auth/login" />
+            )}
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* ================= DESKTOP NAV ================= */}
+      <nav className="hidden md:block bg-purple-500 text-white">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex justify-center gap-10 items-center">
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </>
+  );
+}
+
+/* ================= DROPDOWN ITEM ================= */
+function DropdownItem({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-100 last:border-b-0"
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+/* ================= MOBILE ITEM ================= */
+function MobileItem({
+  href,
+  label,
+  icon,
+}: {
+  href: string;
+  label: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-100"
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }

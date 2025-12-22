@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connect from "@/lib/databaseConnection";
 import Product from "@/models/product.model";
+import Category from "@/models/Category.model";
 
 /* -----------------------------
    Slug Generator
@@ -21,7 +22,11 @@ export async function GET() {
     await connect();
 
     const products = await Product.find()
-      .populate("category")
+      .populate({
+        path: "category",
+        model: Category,
+        select: "title slug", // only fetch title and slug
+      })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -39,12 +44,11 @@ export async function GET() {
 }
 
 /* -----------------------------
-   POST → Add Product (JSON)
+   POST → Add New Product
 ----------------------------- */
 export async function POST(req: Request) {
   try {
     await connect();
-
     const body = await req.json();
 
     const {
@@ -58,22 +62,15 @@ export async function POST(req: Request) {
       images,
     } = body;
 
-    // ✅ Validation
     if (!title || !price || !category || !images?.length) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Required fields missing",
-        },
+        { success: false, message: "Required fields missing" },
         { status: 400 }
       );
     }
 
-    // ✅ Unique Slug
-    const baseSlug = slug
-      ? generateSlug(slug)
-      : generateSlug(title);
-
+    // Generate unique slug
+    const baseSlug = slug ? generateSlug(slug) : generateSlug(title);
     let uniqueSlug = baseSlug;
     let counter = 1;
 
@@ -81,36 +78,33 @@ export async function POST(req: Request) {
       uniqueSlug = `${baseSlug}-${counter++}`;
     }
 
-    // ✅ Final price
-    const finalPrice = Math.round(
-      price - (price * discount) / 100
-    );
+    const finalPrice = Math.round(price - (price * discount) / 100);
 
-    // ✅ Create Product
     const product = await Product.create({
       title,
       slug: uniqueSlug,
       description,
-      category,
+      category, // this should be ObjectId of category
       price,
       discount,
       finalPrice,
       stock,
-      images, // 🔥 URLs from upload API
+      images,
       status: "active",
     });
 
-    return NextResponse.json({
-      success: true,
-      product,
+    // Populate category for response
+    const populatedProduct = await product.populate({
+      path: "category",
+      model: Category,
+      select: "title slug",
     });
+
+    return NextResponse.json({ success: true, product: populatedProduct });
   } catch (error) {
     console.error("ADD PRODUCT ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Product add failed",
-      },
+      { success: false, message: "Product add failed" },
       { status: 500 }
     );
   }

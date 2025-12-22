@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document, models, model } from "mongoose";
+import Category from "./Category.model"; // ✅ Import Category model
 
 /* ---------------------------------------
    Variant Interface
 ---------------------------------------- */
 export interface ProductVariantDocument extends Document {
   product: mongoose.Types.ObjectId;
+  category?: mongoose.Types.ObjectId; // ✅ Added category
 
   sku: string;
 
@@ -21,7 +23,7 @@ export interface ProductVariantDocument extends Document {
 
   stock: number;
 
-  description?: string; // ✅ Added description
+  description?: string;
 
   images: {
     url: string;
@@ -44,6 +46,12 @@ const ProductVariantSchema = new Schema<ProductVariantDocument>(
       ref: "Product",
       required: true,
       index: true,
+    },
+
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category", // ✅ Reference to Category model
+      required: false,
     },
 
     sku: {
@@ -89,7 +97,6 @@ const ProductVariantSchema = new Schema<ProductVariantDocument>(
       default: "",
     },
 
-    /* 🔥 MAX 4 IMAGES ONLY */
     images: {
       type: [
         {

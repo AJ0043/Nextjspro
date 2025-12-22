@@ -12,7 +12,6 @@ interface Category {
 interface Product {
   _id: string;
   title: string;
-  
   slug: string;
   price: number;
   discount?: number;
@@ -136,7 +135,7 @@ export default function AdminProducts() {
           placeholder="Product Title"
           value={form.title}
           onChange={handleChange}
-          className="border p-3 rounded w-full bg-amber-50  text-amber-950"
+          className="border p-3 rounded w-full bg-amber-50 text-amber-950"
           required
         />
         <input
@@ -203,11 +202,7 @@ export default function AdminProducts() {
           </select>
         </div>
 
-        {/* DROPZONE */}
-        <div
-          {...getRootProps()}
-          className="border p-4 rounded bg-amber-50 cursor-pointer text-center"
-        >
+        <div {...getRootProps()} className="border p-4 rounded bg-amber-50 cursor-pointer text-center">
           <input {...getInputProps()} />
           <p className="text-orange-700">Click the box or drag & drop images here</p>
           <button type="button" onClick={open} className="mt-2 px-3 py-1 bg-purple-600 text-white rounded">
@@ -244,7 +239,6 @@ export default function AdminProducts() {
         </button>
       </form>
 
-      {/* PRODUCTS TABLE */}
       <h2 className="text-2xl font-bold mt-10 mb-4 font-serif">Products</h2>
       <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-full bg-amber-100">
@@ -279,7 +273,7 @@ export default function AdminProducts() {
                 <td className="border px-3 py-2 text-lime-800">{p.slug}</td>
                 <td className="border px-3 py-2 text-purple-800">{p.category?.title}</td>
                 <td className="border px-3 py-2 text-red-800">{p.price}</td>
-                <td className="border px-3 py-2 text-sky-800">{p.discount}%</td>
+                <td className="border px-3 py-2 text-sky-800">{p.discount || 0}%</td>
                 <td className="border px-3 py-2 text-orange-800">{p.finalPrice}</td>
                 <td className="border px-3 py-2 text-black">{p.stock}</td>
                 <td className="border px-3 py-2 text-gray-800">

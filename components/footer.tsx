@@ -1,4 +1,11 @@
 import Image from "next/image";
+import {
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+  Linkedin,
+} from "lucide-react";
 
 export default function Footer() {
   return (
@@ -7,11 +14,11 @@ export default function Footer() {
         className="
           max-w-7xl mx-auto
           px-6
-          py-16          /* 🔥 Footer height badhayi */
+          py-16
           grid
           grid-cols-1
           sm:grid-cols-2
-          md:grid-cols-5  /* 🔥 Extra column added */
+          md:grid-cols-5
           gap-10
         "
       >
@@ -28,7 +35,7 @@ export default function Footer() {
           </div>
 
           <p className="mt-5 text-base text-black leading-relaxed">
-            E-Store is your one-stop online shopping destination.  
+            E-Store is your one-stop online shopping destination.
             We deliver genuine products, unbeatable prices, and fast delivery
             across India.
           </p>
@@ -39,14 +46,53 @@ export default function Footer() {
             <li>✔ 100% Genuine Products</li>
             <li>✔ Easy Returns & Refunds</li>
           </ul>
+
+          {/* ================= SOCIAL ICONS ================= */}
+          <div className="mt-6">
+            <h4 className="text-black font-semibold mb-3 border-underline">
+              Follow Us
+            </h4>
+            <div className="flex gap-4">
+              <a
+                href="#"
+                className="p-2 bg-purple-600 rounded-md hover:bg-blue-600 hover:text-white transition"
+              >
+                <Facebook size={20} />
+              </a>
+              <a
+                href="#"
+                className="p-2 bg-purple-600 rounded-md hover:bg-pink-600 hover:text-white transition"
+              >
+                <Instagram size={20} />
+              </a>
+              <a
+                href="#"
+                className="p-2 bg-purple-600 rounded-md hover:bg-sky-500 hover:text-white transition"
+              >
+                <Twitter size={20} />
+              </a>
+              <a
+                href="#"
+                className="p-2 bg-purple-600 rounded-md hover:bg-red-600 hover:text-white transition"
+              >
+                <Youtube size={20} />
+              </a>
+              <a
+                href="#"
+                className="p-2 bg-purple-600 rounded-md hover:bg-blue-800 hover:text-white transition"
+              >
+                <Linkedin size={20} />
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* ================= QUICK LINKS ================= */}
         <div>
-          <h3 className="text-black font-semibold text-lg mb-5 cursor-pointer">
+          <h3 className="text-black font-semibold text-lg mb-5">
             Quick Links
           </h3>
-          <ul className="space-y-3 text-md text-black cursor-pointer">
+          <ul className="space-y-3 text-md text-black">
             <li><a href="/" className="hover:text-white">Home</a></li>
             <li><a href="/shop" className="hover:text-white">Shop</a></li>
             <li><a href="/offers" className="hover:text-white">Offers</a></li>
@@ -84,7 +130,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ================= NEWSLETTER FULL WIDTH ================= */}
+      {/* ================= NEWSLETTER ================= */}
       <div className="bg-gray-800 py-8">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h3 className="text-white text-xl font-semibold mb-2">
@@ -98,7 +144,7 @@ export default function Footer() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="w-full px-4 py-3 rounded-l-md bg-gray-900 text-sm outline-none"
+              className="w-full px-4 py-3 rounded-l-md bg-gray-900 text-sm outline-none text-white"
             />
             <button className="bg-lime-500 text-black px-6 rounded-r-md font-semibold hover:bg-lime-400">
               Subscribe
@@ -108,7 +154,7 @@ export default function Footer() {
       </div>
 
       {/* ================= BOTTOM BAR ================= */}
-      <div className="border-t border-gray-700 text-center py-5 text-sm text-gray-400">
+      <div className="border-t border-black text-center py-5 text-sm text-gray-900">
         © {new Date().getFullYear()} E-Store. All rights reserved.
       </div>
     </footer>
