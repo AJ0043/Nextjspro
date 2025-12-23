@@ -1,166 +1,262 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
 
-type ImageObj = { url: string; public_id?: string };
+/* ================= TYPES ================= */
+type ImageObj = { url: string };
+
 type Variant = {
   _id?: string;
   color?: string;
   size?: string;
-  price: number;
-  discount?: number;
   sellingPrice: number;
 };
-type CategoryType = { _id: string; title: string; slug: string };
+
+type CategoryType = { title: string };
 
 type ProductType = {
   _id: string;
   title: string;
   slug: string;
-  description?: string;
   price: number;
-  discount: number;
   finalPrice: number;
-  stock: number;
   images: ImageObj[];
   category?: CategoryType;
   variants?: Variant[];
-  createdAt: string;
-  updatedAt: string;
 };
 
+/* ================= FILTER DATA ================= */
+const PRICE_RANGES = [
+  { label: "₹500 – ₹800", min: 500, max: 800 },
+  { label: "₹800 – ₹1600", min: 800, max: 1600 },
+  { label: "₹1600 – ₹3200", min: 1600, max: 3200 },
+  { label: "₹3200 – ₹5500", min: 3200, max: 5500 },
+  { label: "₹5500 – ₹10000", min: 5500, max: 10000 },
+];
+
+const PRODUCT_TYPES = ["joggers", "pyjama", "shirts", "jeans", "pants"];
+const COLORS = ["green", "black", "brown", "gray", "silver", "blue"];
+const SIZES = ["s", "m", "l", "xl", "xxl"];
+const GENDERS = ["men", "women"];
+
+/* ================= PAGE ================= */
 export default function CargoProductsPage() {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
+  /* FILTER STATES */
+  const [priceRange, setPriceRange] =
+    useState<{ min: number; max: number } | null>(null);
+
+  const [selectedType, setSelectedType] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedGender, setSelectedGender] = useState<string[]>([]);
+
+  /* ================= FETCH ================= */
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const res = await axios.get("/api/products");
-        if (!res.data.success) throw new Error("Failed to load products");
+    async function fetchData() {
+      const res = await axios.get("/api/products");
 
-        const cargoProducts = res.data.products.filter(
-          (p: ProductType) => p.category?.title === "Cargo"
-        );
+      const cargoProducts = res.data.products.filter(
+        (p: ProductType) => p.category?.title === "Cargo"
+      );
 
-        const productsWithVariants = await Promise.all(
-          cargoProducts.map(async (product: ProductType) => {
-            try {
-              const vRes = await axios.get(`/api/products/variants/${product._id}`);
-              return { ...product, variants: vRes.data.variants || [] };
-            } catch {
-              return { ...product, variants: [] };
-            }
-          })
-        );
+      const withVariants = await Promise.all(
+        cargoProducts.map(async (p: ProductType) => {
+          try {
+            const v = await axios.get(`/api/products/variants/${p._id}`);
+            return { ...p, variants: v.data.variants || [] };
+          } catch {
+            return { ...p, variants: [] };
+          }
+        })
+      );
 
-        setProducts(productsWithVariants);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
+      setProducts(withVariants);
+      setLoading(false);
     }
 
-    fetchProducts();
+    fetchData();
   }, []);
 
+  /* ================= FILTER LOGIC ================= */
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const title = p.title.toLowerCase();
+      const slug = p.slug.toLowerCase();
+
+      /* PRICE */
+      if (priceRange) {
+        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max)
+          return false;
+      }
+
+      /* PRODUCT TYPE (joggers / pyjama / shirts / jeans / pants) */
+      if (selectedType.length > 0) {
+        const typeMatch = selectedType.some(
+          (t) => title.includes(t) || slug.includes(t)
+        );
+        if (!typeMatch) return false;
+      }
+
+      /* GENDER */
+      if (selectedGender.length > 0) {
+        const isMen =
+          title.includes("men") ||
+          title.includes("mens") ||
+          title.includes("gents");
+
+        const isWomen =
+          title.includes("women") ||
+          title.includes("womens") ||
+          title.includes("ladies");
+
+        const genderMatch =
+          (selectedGender.includes("men") && isMen) ||
+          (selectedGender.includes("women") && isWomen);
+
+        if (!genderMatch) return false;
+      }
+
+      /* COLOR (VARIANT + TITLE + SLUG) */
+      if (selectedColors.length > 0) {
+        const colorInVariant =
+          p.variants?.some((v) =>
+            selectedColors.some((c) =>
+              v.color?.toLowerCase().includes(c)
+            )
+          ) ?? false;
+
+        const colorInText = selectedColors.some(
+          (c) => title.includes(c) || slug.includes(c)
+        );
+
+        if (!colorInVariant && !colorInText) return false;
+      }
+
+      /* SIZE */
+      if (selectedSizes.length > 0) {
+        const sizeMatch =
+          p.variants?.some((v) =>
+            selectedSizes.includes(v.size?.toLowerCase() || "")
+          ) ?? false;
+
+        if (!sizeMatch) return false;
+      }
+
+      return true;
+    });
+  }, [
+    products,
+    priceRange,
+    selectedType,
+    selectedColors,
+    selectedSizes,
+    selectedGender,
+  ]);
+
   if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        Cargo Products ({products.length})
-      </h1>
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      {/* ================= FILTER PANEL ================= */}
+      <aside className="border rounded-lg p-4 bg-white h-fit">
+        <h2 className="font-bold text-lg mb-4">Filters</h2>
 
-      {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map((p) => (
-          <div
-            key={p._id}
-            className="group border rounded-xl bg-white overflow-hidden shadow hover:shadow-xl transition"
-          >
-            {/* IMAGE */}
-            <div className="relative w-full h-52 bg-gray-100">
-              {p.images?.[0]?.url ? (
-                <img
-                  src={p.images[0].url}
-                  alt={p.title}
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                  No Image
-                </div>
-              )}
+        <FilterSection title="Product Type" values={PRODUCT_TYPES} selected={selectedType} setSelected={setSelectedType} />
+        <FilterSection title="Gender" values={GENDERS} selected={selectedGender} setSelected={setSelectedGender} />
+        <FilterSection title="Color" values={COLORS} selected={selectedColors} setSelected={setSelectedColors} />
+        <FilterSection title="Size" values={SIZES} selected={selectedSizes} setSelected={setSelectedSizes} />
 
-              {/* Wishlist */}
-              <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:text-red-500 transition">
-                <Heart size={18} />
-              </button>
-            </div>
+        <div className="mt-4">
+          <p className="font-semibold mb-2">Price</p>
+          {PRICE_RANGES.map((r) => (
+            <button
+              key={r.label}
+              onClick={() => setPriceRange(r)}
+              className={`block w-full text-left px-3 py-1 mb-1 text-sm rounded ${
+                priceRange?.label === r.label
+                  ? "bg-purple-600 text-white"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </aside>
 
-            {/* CONTENT */}
-            <div className="p-4 space-y-2">
-              <h2 className="font-semibold text-lg truncate">{p.title}</h2>
-              <p className="text-sm text-gray-500">{p.category?.title}</p>
+      {/* ================= PRODUCTS ================= */}
+      <div>
+        <h1 className="text-3xl font-bold mb-6">
+          Cargo Products ({filteredProducts.length})
+        </h1>
 
-              <div className="flex items-center gap-3">
-                <span className="line-through text-sm text-gray-400">
-                  ₹{p.price}
-                </span>
-                <span className="text-green-700 font-bold text-lg">
-                  ₹{p.finalPrice}
-                </span>
-              </div>
-
-              {/* VARIANTS */}
-              {p.variants && p.variants.length > 0 && (
-                <div className="border-t pt-2 text-sm">
-                  <p className="font-semibold mb-1">Available Variants</p>
-                  {p.variants.slice(0, 2).map((v, idx) => (
-                    <div key={idx} className="flex justify-between">
-                      <span>
-                        {v.color || "—"} {v.size && `| ${v.size}`}
-                      </span>
-                      <span className="font-semibold text-green-700">
-                        ₹{v.sellingPrice}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ACTION BUTTONS */}
-              <div className="mt-3 grid grid-cols-3 gap-3">
-                <Link
-                  href={`/products/${p.slug}`}
-                  className="flex items-center justify-center gap-2 bg-purple-500 text-sm text-white font-medium border rounded-sm py-2 hover:bg-purple-400 transition cursor-pointer"
-                >
-                  <Eye size={16} /> View
-                </Link>
-
-                <Link
-                  href={`/products/${p.slug}?variants=true`}
-                  className="flex items-center justify-center gap-2 text-sm bg-green-300 font-medium border rounded-sm py-2 hover:bg-gray-100 transition"
-                >
-                  <Layers size={16} /> Variant
-                </Link>
-
-                <button className="flex items-center justify-center gap-2 text-sm font-semibold bg-indigo-600 text-white rounded-sm py-2 hover:bg-indigo-400 transition cursor-pointer">
-                  <ShoppingCart size={16} /> Buy
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          {filteredProducts.map((p) => (
+            <div key={p._id} className="border rounded-lg bg-white shadow hover:shadow-lg transition">
+              <div className="relative h-44 bg-gray-100">
+                <img src={p.images?.[0]?.url} className="h-full w-full object-contain" />
+                <button className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow">
+                  <Heart size={16} />
                 </button>
               </div>
+
+              <div className="p-3 space-y-1.5">
+                <h2 className="font-semibold text-base truncate">{p.title}</h2>
+
+                <div className="flex gap-2 items-center">
+                  <span className="line-through text-xs text-gray-400">₹{p.price}</span>
+                  <span className="text-green-700 font-bold text-base">₹{p.finalPrice}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <Link href={`/products/${p.slug}`} className="bg-purple-500 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
+                    <Eye size={14} /> View
+                  </Link>
+
+                  <Link href={`/products/${p.slug}?variants=true`} className="bg-green-300 text-xs py-2 rounded flex items-center justify-center gap-1">
+                    <Layers size={14} /> Variant
+                  </Link>
+
+                  <button className="bg-indigo-600 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
+                    <ShoppingCart size={14} /> Buy
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* ================= FILTER COMPONENT ================= */
+function FilterSection({ title, values, selected, setSelected }: any) {
+  return (
+    <div className="mb-4">
+      <p className="font-semibold mb-2">{title}</p>
+      {values.map((v: string) => (
+        <label key={v} className="flex gap-2 text-sm mb-1">
+          <input
+            type="checkbox"
+            checked={selected.includes(v)}
+            onChange={() =>
+              setSelected((prev: string[]) =>
+                prev.includes(v)
+                  ? prev.filter((x) => x !== v)
+                  : [...prev, v]
+              )
+            }
+          />
+          {v.toUpperCase()}
+        </label>
+      ))}
     </div>
   );
 }

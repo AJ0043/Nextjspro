@@ -44,12 +44,12 @@ export default function Header() {
     { label: "Mens", href: "/website/category/Men" },
     { label: "Electronics", href: "/website/category/electronics" },
     { label: "LuggageBags", href: "/website/category/Bags" },
-    { label: "KitchenWare", href: "/category/kitchenware" },
-    { label: "Shoes", href: "/category/shoes" },
-    { label: "Cap", href: "/category/cap" },
-    { label: "Product", href: "/products" },
-    { label: "NewProduct", href: "/products/new" },
-    { label: "About", href: "/about" },
+    { label: "KitchenWare", href: "/website/category/Kitchenware" },
+    { label: "Shoes", href: "/website/category/Shoes" },
+    { label: "Cap", href: "/website/category/Cap" },
+    { label: "Sports", href: "/website/category/sports" },
+    { label: "NewProduct", href: "/website/category/NewProducts" },
+    { label: "About", href: "/website/category/abouts" },
   ];
 
   /* ================= FETCH USER ================= */

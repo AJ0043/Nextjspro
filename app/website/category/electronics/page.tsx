@@ -75,7 +75,7 @@ export default function CargoProductsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">
+      <h1 className="text-3xl font-serif mb-6 text-blue-500">
         Cargo Products ({products.length})
       </h1>
 

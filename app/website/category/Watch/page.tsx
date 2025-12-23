@@ -1,165 +1,339 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
 
-type ImageObj = { url: string; public_id?: string };
+/* ================= TYPES ================= */
+type ImageObj = { url: string };
+
 type Variant = {
   _id?: string;
   color?: string;
-  size?: string;
-  price: number;
-  discount?: number;
   sellingPrice: number;
 };
-type CategoryType = { _id: string; title: string; slug: string };
+
+type CategoryType = {
+  _id: string;
+  title: string;
+};
 
 type ProductType = {
   _id: string;
   title: string;
   slug: string;
-  description?: string;
   price: number;
-  discount: number;
   finalPrice: number;
-  stock: number;
   images: ImageObj[];
   category?: CategoryType;
   variants?: Variant[];
-  createdAt: string;
-  updatedAt: string;
 };
 
-export default function CargoProductsPage() {
+/* ================= FILTER DATA ================= */
+const PRICE_RANGES = [
+  { label: "₹500 - ₹800", min: 500, max: 800 },
+  { label: "₹800 - ₹1600", min: 800, max: 1600 },
+  { label: "₹1600 - ₹3200", min: 1600, max: 3200 },
+  { label: "₹3200 - ₹5500", min: 3200, max: 5500 },
+  { label: "₹5500 - ₹10000", min: 5500, max: 10000 },
+];
+
+const COLORS = ["black", "silver", "red", "green", "gray"];
+
+const BRANDS = [
+  "sonata",
+  "rado",
+  "fossil",
+  "titan",
+  "casio",
+  "timex",
+  "rolex",
+];
+
+const GENDERS = ["men", "women"];
+
+/* ================= PAGE ================= */
+export default function WatchProductsPage() {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
+  const [priceRange, setPriceRange] =
+    useState<{ min: number; max: number } | null>(null);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+
+  /* ================= FETCH ================= */
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const res = await axios.get("/api/products");
-        if (!res.data.success) throw new Error("Failed to load products");
+    async function fetchData() {
+      setLoading(true);
+      const res = await axios.get("/api/products");
 
-        const cargoProducts = res.data.products.filter(
-          (p: ProductType) => p.category?.title === "Watch"
-        );
+      const watchProducts = res.data.products.filter(
+        (p: ProductType) => p.category?.title === "Watch"
+      );
 
-        const productsWithVariants = await Promise.all(
-          cargoProducts.map(async (product: ProductType) => {
-            try {
-              const vRes = await axios.get(`/api/products/variants/${product._id}`);
-              return { ...product, variants: vRes.data.variants || [] };
-            } catch {
-              return { ...product, variants: [] };
-            }
-          })
-        );
+      const withVariants = await Promise.all(
+        watchProducts.map(async (p: ProductType) => {
+          try {
+            const v = await axios.get(`/api/products/variants/${p._id}`);
+            return { ...p, variants: v.data.variants || [] };
+          } catch {
+            return { ...p, variants: [] };
+          }
+        })
+      );
 
-        setProducts(productsWithVariants);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
+      setProducts(withVariants);
+      setLoading(false);
     }
 
-    fetchProducts();
+    fetchData();
   }, []);
 
+  /* ================= FILTER LOGIC ================= */
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const title = p.title.toLowerCase();
+
+      /* PRICE */
+      if (priceRange) {
+        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max)
+          return false;
+      }
+
+      /* COLOR */
+      if (selectedColors.length > 0) {
+        const titleColorMatch = selectedColors.some((c) =>
+          title.includes(c)
+        );
+
+        const variantColorMatch =
+          p.variants?.some(
+            (v) =>
+              v.color &&
+              selectedColors.includes(v.color.toLowerCase())
+          ) ?? false;
+
+        if (!titleColorMatch && !variantColorMatch) return false;
+      }
+
+      /* BRAND */
+      if (selectedBrands.length > 0) {
+        const brandMatch = selectedBrands.some((b) =>
+          title.includes(b)
+        );
+        if (!brandMatch) return false;
+      }
+
+      /* GENDER */
+      if (selectedGenders.length > 0) {
+        const isMen =
+          title.includes("men") ||
+          title.includes("mens") ||
+          title.includes("gents") ||
+          title.includes("male");
+
+        const isWomen =
+          title.includes("women") ||
+          title.includes("womens") ||
+          title.includes("ladies") ||
+          title.includes("female");
+
+        if (
+          (selectedGenders.includes("men") && isMen) ||
+          (selectedGenders.includes("women") && isWomen)
+        ) {
+          return true;
+        }
+
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    products,
+    priceRange,
+    selectedColors,
+    selectedBrands,
+    selectedGenders,
+  ]);
+
   if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        Cargo Products ({products.length})
-      </h1>
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      {/* ================= FILTER PANEL ================= */}
+      <aside className="border rounded-lg p-4 bg-white h-fit">
+        <h2 className="font-bold text-lg mb-4">Filters</h2>
 
-      {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map((p) => (
-          <div
-            key={p._id}
-            className="group border rounded-xl bg-white overflow-hidden shadow hover:shadow-xl transition"
+        {/* PRICE */}
+        <div className="mb-5">
+          <p className="font-semibold mb-2">Price</p>
+          {PRICE_RANGES.map((r) => (
+            <button
+              key={r.label}
+              onClick={() => setPriceRange(r)}
+              className={`block w-full text-left px-3 py-1 mb-1 text-sm rounded ${
+                priceRange?.label === r.label
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setPriceRange(null)}
+            className="text-xs text-red-500"
           >
-            {/* IMAGE */}
-            <div className="relative w-full h-52 bg-gray-100">
-              {p.images?.[0]?.url ? (
-                <img
-                  src={p.images[0].url}
-                  alt={p.title}
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                  No Image
-                </div>
-              )}
+            Clear price
+          </button>
+        </div>
 
-              {/* Wishlist */}
-              <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:text-red-500 transition">
-                <Heart size={18} />
-              </button>
-            </div>
+        {/* COLOR */}
+        <div className="mb-5">
+          <p className="font-semibold mb-2">Color</p>
+          {COLORS.map((c) => (
+            <label key={c} className="flex gap-2 text-sm mb-1">
+              <input
+                type="checkbox"
+                checked={selectedColors.includes(c)}
+                onChange={() =>
+                  setSelectedColors((prev) =>
+                    prev.includes(c)
+                      ? prev.filter((x) => x !== c)
+                      : [...prev, c]
+                  )
+                }
+              />
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </label>
+          ))}
+          <button
+            onClick={() => setSelectedColors([])}
+            className="text-xs text-red-500"
+          >
+            Clear colors
+          </button>
+        </div>
 
-            {/* CONTENT */}
-            <div className="p-4 space-y-2">
-              <h2 className="font-semibold text-lg truncate">{p.title}</h2>
-              <p className="text-sm text-gray-500">{p.category?.title}</p>
+        {/* BRAND */}
+        <div className="mb-5">
+          <p className="font-semibold mb-2">Brand</p>
+          {BRANDS.map((b) => (
+            <label key={b} className="flex gap-2 text-sm mb-1">
+              <input
+                type="checkbox"
+                checked={selectedBrands.includes(b)}
+                onChange={() =>
+                  setSelectedBrands((prev) =>
+                    prev.includes(b)
+                      ? prev.filter((x) => x !== b)
+                      : [...prev, b]
+                  )
+                }
+              />
+              {b.charAt(0).toUpperCase() + b.slice(1)}
+            </label>
+          ))}
+          <button
+            onClick={() => setSelectedBrands([])}
+            className="text-xs text-red-500"
+          >
+            Clear brands
+          </button>
+        </div>
 
-              <div className="flex items-center gap-3">
-                <span className="line-through text-sm text-gray-400">
-                  ₹{p.price}
-                </span>
-                <span className="text-green-700 font-bold text-lg">
-                  ₹{p.finalPrice}
-                </span>
-              </div>
+        {/* GENDER */}
+        <div>
+          <p className="font-semibold mb-2">Gender</p>
+          {GENDERS.map((g) => (
+            <label key={g} className="flex gap-2 text-sm mb-1">
+              <input
+                type="checkbox"
+                checked={selectedGenders.includes(g)}
+                onChange={() =>
+                  setSelectedGenders((prev) =>
+                    prev.includes(g)
+                      ? prev.filter((x) => x !== g)
+                      : [...prev, g]
+                  )
+                }
+              />
+              {g === "men" ? "Men" : "Women"}
+            </label>
+          ))}
+          <button
+            onClick={() => setSelectedGenders([])}
+            className="text-xs text-red-500"
+          >
+            Clear gender
+          </button>
+        </div>
+      </aside>
 
-              {/* VARIANTS */}
-              {p.variants && p.variants.length > 0 && (
-                <div className="border-t pt-2 text-sm">
-                  <p className="font-semibold mb-1">Available Variants</p>
-                  {p.variants.slice(0, 2).map((v, idx) => (
-                    <div key={idx} className="flex justify-between">
-                      <span>
-                        {v.color || "—"} {v.size && `| ${v.size}`}
-                      </span>
-                      <span className="font-semibold text-green-700">
-                        ₹{v.sellingPrice}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* ================= PRODUCTS ================= */}
+      <div>
+        <h1 className="text-3xl font-bold mb-6">
+          Watch Products ({filteredProducts.length})
+        </h1>
 
-              {/* ACTION BUTTONS */}
-              <div className="mt-3 grid grid-cols-3 gap-3">
-                <Link
-                  href={`/products/${p.slug}`}
-                  className="flex items-center justify-center gap-2 bg-purple-500 text-sm text-white font-medium border rounded-sm py-2 hover:bg-purple-400 transition cursor-pointer"
-                >
-                  <Eye size={16} /> View
-                </Link>
-
-                <Link
-                  href={`/products/${p.slug}?variants=true`}
-                  className="flex items-center justify-center gap-2 text-sm bg-green-300 font-medium border rounded-sm py-2 hover:bg-gray-100 transition"
-                >
-                  <Layers size={16} /> Variant
-                </Link>
-
-                <button className="flex items-center justify-center gap-2 text-sm font-semibold bg-indigo-600 text-white rounded-sm py-2 hover:bg-indigo-400 transition cursor-pointer">
-                  <ShoppingCart size={16} /> Buy
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProducts.map((p) => (
+            <div
+              key={p._id}
+              className="border rounded-xl bg-white overflow-hidden shadow hover:shadow-xl transition"
+            >
+              <div className="relative h-44 bg-gray-100">
+                {p.images?.[0]?.url && (
+                  <img
+                    src={p.images[0].url}
+                    className="h-full w-full object-contain"
+                  />
+                )}
+                <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow">
+                  <Heart size={16} />
                 </button>
               </div>
+
+              <div className="p-4 space-y-2">
+                <h3 className="font-semibold text-lg truncate">{p.title}</h3>
+
+                <div className="flex gap-2 items-center">
+                  <span className="line-through text-sm text-gray-400">
+                    ₹{p.price}
+                  </span>
+                  <span className="text-green-700 font-bold text-lg">
+                    ₹{p.finalPrice}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <Link
+                    href={`/products/${p.slug}`}
+                    className="flex justify-center items-center gap-1 text-sm border rounded py-2"
+                  >
+                    <Eye size={14} /> View
+                  </Link>
+
+                  <Link
+                    href={`/products/${p.slug}?variants=true`}
+                    className="flex justify-center items-center gap-1 text-sm bg-green-300 rounded py-2"
+                  >
+                    <Layers size={14} /> Variant
+                  </Link>
+
+                  <button className="flex justify-center items-center gap-1 text-sm bg-indigo-600 text-white rounded py-2">
+                    <ShoppingCart size={14} /> Buy
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
