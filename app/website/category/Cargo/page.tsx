@@ -49,7 +49,7 @@ export default function CargoProductsPage() {
 
   /* FILTER STATES */
   const [priceRange, setPriceRange] =
-    useState<{ min: number; max: number } | null>(null);
+    useState<{ label: string; min: number; max: number } | null>(null);
 
   const [selectedType, setSelectedType] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);

@@ -232,10 +232,10 @@ function FilterSection({
   setSelected,
 }: any) {
   return (
-    <div className="mb-4">
-      <p className="font-semibold mb-2">{title}</p>
+    <div className="mb-4 text-purple-900">
+      <p className="font-semibold mb-2 text-purple-500">{title}</p>
       {values.map((v: string) => (
-        <label key={v} className="flex gap-2 text-sm mb-1">
+        <label key={v} className="flex gap-2 text-sm mb-1 items-center">
           <input
             type="checkbox"
             checked={selected.includes(v)}

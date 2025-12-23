@@ -39,7 +39,7 @@ const PRICE_RANGES = [
   { label: "₹5500 - ₹10000", min: 5500, max: 10000 },
 ];
 
-const COLORS = ["black", "silver", "red", "green", "gray"];
+const COLORS = ["black", "silver", "red", "green", "grey","blue"];
 
 const BRANDS = [
   "sonata",
@@ -59,7 +59,7 @@ export default function WatchProductsPage() {
   const [loading, setLoading] = useState(true);
 
   const [priceRange, setPriceRange] =
-    useState<{ min: number; max: number } | null>(null);
+    useState<{ label: string; min: number; max: number } | null>(null);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
@@ -177,7 +177,7 @@ export default function WatchProductsPage() {
               key={r.label}
               onClick={() => setPriceRange(r)}
               className={`block w-full text-left px-3 py-1 mb-1 text-sm rounded ${
-                priceRange?.label === r.label
+                priceRange?.min === r.min && priceRange?.max === r.max
                   ? "bg-indigo-600 text-white"
                   : "hover:bg-gray-100"
               }`}
