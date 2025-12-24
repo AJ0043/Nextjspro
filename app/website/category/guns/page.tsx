@@ -24,7 +24,7 @@ type ProductType = {
 const GUN_BRANDS = [
   { label: "Colt", value: "colt" },
   { label: "Smith & Wesson", value: "smith" },
-  { label: "Beretta", value: "beretta" },
+  { label: "Beratta", value: "Beratta" },
   { label: "Daniel Defense", value: "daniel" },
   { label: "Bushmaster", value: "bushmaster" },
   { label: "Ruger", value: "ruger" },

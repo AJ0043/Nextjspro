@@ -306,7 +306,7 @@ export default function WatchProductsPage() {
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href={`/products/${p.slug}`}
-                    className="flex justify-center items-center gap-1 text-sm border rounded py-2"
+                    className="flex justify-center items-center gap-1 text-sm border rounded py-2 bg-purple-400"
                   >
                     <Eye size={14} /> View
                   </Link>
