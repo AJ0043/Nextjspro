@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -21,7 +21,6 @@ type ProductType = {
 };
 
 /* ================= FILTER DATA ================= */
-/* label = UI display, value = filter keyword */
 const GUN_BRANDS = [
   { label: "Colt", value: "colt" },
   { label: "Smith & Wesson", value: "smith" },
@@ -80,31 +79,12 @@ export default function GunsPage() {
     return products.filter((p) => {
       const text = `${p.title} ${p.slug}`.toLowerCase();
 
-      /* BRAND */
-      if (
-        selectedBrands.length > 0 &&
-        !selectedBrands.some((b) => text.includes(b))
-      )
-        return false;
+      if (selectedBrands.length > 0 && !selectedBrands.some((b) => text.includes(b))) return false;
+      if (selectedTypes.length > 0 && !selectedTypes.some((t) => text.includes(t))) return false;
+      if (selectedQuality.length > 0 && !selectedQuality.some((q) => text.includes(q))) return false;
 
-      /* TYPE */
-      if (
-        selectedTypes.length > 0 &&
-        !selectedTypes.some((t) => text.includes(t))
-      )
-        return false;
-
-      /* QUALITY */
-      if (
-        selectedQuality.length > 0 &&
-        !selectedQuality.some((q) => text.includes(q))
-      )
-        return false;
-
-      /* PRICE */
       if (priceRange) {
-        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max)
-          return false;
+        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max) return false;
       }
 
       return true;
@@ -167,21 +147,13 @@ export default function GunsPage() {
 
       {/* ================= PRODUCTS ================= */}
       <div>
-        <h1 className="text-3xl font-bold mb-6">
-          Guns ({filteredProducts.length})
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">Guns ({filteredProducts.length})</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {filteredProducts.map((p) => (
-            <div
-              key={p._id}
-              className="border rounded-xl bg-white shadow hover:shadow-lg transition"
-            >
+            <div key={p._id} className="border rounded-xl bg-white shadow hover:shadow-lg transition">
               <div className="relative h-52 bg-gray-100">
-                <img
-                  src={p.images?.[0]?.url}
-                  className="h-full w-full object-contain"
-                />
+                <img src={p.images?.[0]?.url} className="h-full w-full object-contain" />
                 <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow">
                   <Heart size={16} />
                 </button>
@@ -191,15 +163,12 @@ export default function GunsPage() {
                 <h3 className="font-semibold truncate">{p.title}</h3>
 
                 <div className="flex gap-2 items-center">
-                  <span className="line-through text-sm text-gray-400">
-                    ₹{p.price}
-                  </span>
-                  <span className="text-green-700 font-bold text-lg">
-                    ₹{p.finalPrice}
-                  </span>
+                  <span className="line-through text-sm text-gray-400">₹{p.price}</span>
+                  <span className="text-green-700 font-bold text-lg">₹{p.finalPrice}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                {/* ACTION BUTTONS */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href={`/products/${p.slug}`}
                     className="bg-purple-500 text-white text-xs py-2 rounded flex items-center justify-center gap-1"
@@ -213,10 +182,6 @@ export default function GunsPage() {
                   >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  <button className="bg-indigo-600 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, AlignVerticalDistributeCenter } from "lucide-react";
+import { Heart, Eye, AlignVerticalDistributeCenter } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -32,6 +32,7 @@ const BRANDS = ["nike", "adidas", "puma", "reebok", "campus", "woodland"];
 const COLORS = ["black", "white", "blue", "red", "green", "brown"];
 const SIZES = ["6", "7", "8", "9", "10", "11"];
 const GENDERS = ["men", "women"];
+const TYPES = ["sports", "office", "party"];
 
 const PRICE_RANGES = [
   { label: "₹500 – ₹1,000", min: 500, max: 1000 },
@@ -49,6 +50,7 @@ export default function ShoesProductsPage() {
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [genders, setGenders] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] =
     useState<{ min: number; max: number; label: string } | null>(null);
 
@@ -73,18 +75,14 @@ export default function ShoesProductsPage() {
     return products.filter((p) => {
       const text = `${p.title} ${p.slug}`.toLowerCase();
 
-      // Gender filter
       if (genders.length && !genders.some((g) => text.includes(g))) return false;
-
-      // Brand filter
       if (brands.length && !brands.some((b) => text.includes(b))) return false;
+      if (types.length && !types.some((t) => text.includes(t))) return false;
 
-      // Price filter
       if (priceRange) {
         if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max) return false;
       }
 
-      // Color filter: match title or variants
       if (colors.length) {
         const titleColorMatch = colors.some((c) => text.includes(c));
         const variantColorMatch = p.variants?.some((v) =>
@@ -93,7 +91,6 @@ export default function ShoesProductsPage() {
         if (!titleColorMatch && !variantColorMatch) return false;
       }
 
-      // Size filter: match title or variants
       if (sizes.length) {
         const titleSizeMatch = sizes.some((s) => text.includes(s));
         const variantSizeMatch = p.variants?.some((v) =>
@@ -104,7 +101,7 @@ export default function ShoesProductsPage() {
 
       return true;
     });
-  }, [products, brands, colors, sizes, priceRange, genders]);
+  }, [products, brands, colors, sizes, priceRange, genders, types]);
 
   if (loading) return <div className="p-6">Loading...</div>;
 
@@ -114,6 +111,7 @@ export default function ShoesProductsPage() {
       <aside className="border rounded-lg p-4 bg-white h-fit">
         <Filter title="Gender" values={GENDERS} selected={genders} setSelected={setGenders} />
         <Filter title="Brand" values={BRANDS} selected={brands} setSelected={setBrands} />
+        <Filter title="Type" values={TYPES} selected={types} setSelected={setTypes} />
         <Filter title="Color" values={COLORS} selected={colors} setSelected={setColors} />
         <Filter title="Size" values={SIZES} selected={sizes} setSelected={setSizes} />
 
@@ -184,7 +182,7 @@ export default function ShoesProductsPage() {
                   <button
                     className="flex items-center justify-center gap-1 bg-green-600 text-white text-xs font-semibold px-3 py-3 rounded-md hover:bg-indigo-500"
                   >
-                    <AlignVerticalDistributeCenter size={14} /> Varient
+                    <AlignVerticalDistributeCenter size={14} /> Variant
                   </button>
                 </div>
               </div>

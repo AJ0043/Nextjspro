@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -87,20 +87,11 @@ export default function MensProductsPage() {
     return products.filter((p) => {
       const text = `${p.title} ${p.slug}`.toLowerCase();
 
-      /* PRODUCT TYPE */
-      if (selectedTypes.length > 0) {
-        if (!selectedTypes.some((t) => text.includes(t))) return false;
-      }
+      if (selectedTypes.length > 0 && !selectedTypes.some((t) => text.includes(t))) return false;
+      if (selectedColors.length > 0 && !selectedColors.some((c) => text.includes(c))) return false;
 
-      /* COLOR */
-      if (selectedColors.length > 0) {
-        if (!selectedColors.some((c) => text.includes(c))) return false;
-      }
-
-      /* PRICE */
       if (priceRange) {
-        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max)
-          return false;
+        if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max) return false;
       }
 
       return true;
@@ -191,7 +182,7 @@ export default function MensProductsPage() {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href={`/products/${p.slug}`}
                     className="bg-indigo-500 text-white text-xs py-2 rounded flex items-center justify-center gap-1"
@@ -205,10 +196,6 @@ export default function MensProductsPage() {
                   >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  <button className="bg-purple-600 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>

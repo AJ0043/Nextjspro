@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -206,7 +206,8 @@ export default function BagsProductsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                {/* ================= BUTTONS ================= */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                    href={`/products/${p.slug}`}
                    className="
@@ -217,7 +218,6 @@ export default function BagsProductsPage() {
                     rounded-sm
                     hover:bg-blue-700
                     transition
-                    
                   "
                   >
                    <Eye size={12} /> View
@@ -228,31 +228,15 @@ export default function BagsProductsPage() {
                      className="
                      flex items-center justify-center gap-1
                      bg-green-600 text-white
-                      text-[11px] font-semibold
-                       px-2 py-1
-                      rounded-sm
-                      hover:bg-green-700
-                      transition
-                      "
+                     text-[11px] font-semibold
+                     px-2 py-2
+                     rounded-sm
+                     hover:bg-green-700
+                     transition
+                     "
                     >
                     <Layers size={12} /> Variant
                   </Link>
-
-
-                 <button
-                  className="
-                    flex items-center justify-center gap-1
-                    bg-indigo-600 text-white
-                    text-[11px] font-semibold
-                    px-2 py-1
-                    rounded-sm
-                    hover:bg-indigo-700
-                    transition
-                  "
-                >
-                 <ShoppingCart size={12} /> Buy
-              </button>
-
                 </div>
               </div>
             </div>

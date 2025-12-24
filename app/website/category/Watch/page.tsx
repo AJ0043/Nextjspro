@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -41,15 +41,7 @@ const PRICE_RANGES = [
 
 const COLORS = ["black", "silver", "red", "green", "grey","blue"];
 
-const BRANDS = [
-  "sonata",
-  "rado",
-  "fossil",
-  "titan",
-  "casio",
-  "timex",
-  "rolex",
-];
+const BRANDS = ["sonata","rado","fossil","titan","casio","timex","rolex"];
 
 const GENDERS = ["men", "women"];
 
@@ -311,7 +303,7 @@ export default function WatchProductsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href={`/products/${p.slug}`}
                     className="flex justify-center items-center gap-1 text-sm border rounded py-2"
@@ -325,10 +317,6 @@ export default function WatchProductsPage() {
                   >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  <button className="flex justify-center items-center gap-1 text-sm bg-indigo-600 text-white rounded py-2">
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>

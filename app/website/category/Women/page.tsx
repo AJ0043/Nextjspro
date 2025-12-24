@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -68,6 +68,9 @@ export default function WomenProductsPage() {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] =
     useState<{ min: number; max: number; label: string } | null>(null);
+
+  /* HEART TOGGLE */
+  const [likedProducts, setLikedProducts] = useState<string[]>([]);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -177,8 +180,20 @@ export default function WomenProductsPage() {
                   src={p.images?.[0]?.url}
                   className="h-full w-full object-contain"
                 />
-                <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow">
-                  <Heart size={16} />
+                <button
+                  className="absolute top-2 right-2 p-2 rounded-full shadow"
+                  onClick={() =>
+                    setLikedProducts((prev) =>
+                      prev.includes(p._id)
+                        ? prev.filter((id) => id !== p._id)
+                        : [...prev, p._id]
+                    )
+                  }
+                >
+                  <Heart
+                    size={16}
+                    className={likedProducts.includes(p._id) ? "text-red-600" : "text-gray-500"}
+                  />
                 </button>
               </div>
 
@@ -196,7 +211,7 @@ export default function WomenProductsPage() {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link
                     href={`/products/${p.slug}`}
                     className="bg-purple-500 text-white text-xs py-2 rounded flex items-center justify-center gap-1"
@@ -210,10 +225,6 @@ export default function WomenProductsPage() {
                   >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  <button className="bg-indigo-600 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>
@@ -235,7 +246,7 @@ function FilterSection({
     <div className="mb-4 text-purple-900">
       <p className="font-semibold mb-2 text-purple-500">{title}</p>
       {values.map((v: string) => (
-        <label key={v} className="flex gap-2 text-sm mb-1 items-center">
+        <label key={v} className="flex gap-2 text-sm mb-1 items-center cursor-pointer">
           <input
             type="checkbox"
             checked={selected.includes(v)}

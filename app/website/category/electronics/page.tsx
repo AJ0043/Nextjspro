@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -81,7 +81,7 @@ export default function ElectronicsProductsPage() {
       const res = await axios.get("/api/products");
 
       const electronics = res.data.products.filter(
-        (p: ProductType) => p.category?.title === "electronics"
+        (p: ProductType) => p.category?.title?.toLowerCase() === "electronics"
       );
 
       setProducts(electronics);
@@ -159,8 +159,9 @@ export default function ElectronicsProductsPage() {
               {/* IMAGE */}
               <div className="relative h-52 bg-gray-100">
                 <img
-                  src={p.images?.[0]?.url}
+                  src={p.images?.[0]?.url || "/placeholder.png"}
                   className="h-full w-full object-contain"
+                  alt={p.title}
                 />
                 <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow">
                   <Heart size={16} />
@@ -181,7 +182,7 @@ export default function ElectronicsProductsPage() {
                 </div>
 
                 {/* ACTION BUTTONS */}
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   {/* View */}
                   <Link
                     href={`/products/${p.slug}`}
@@ -203,16 +204,6 @@ export default function ElectronicsProductsPage() {
                   >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  {/* Buy */}
-                  <button
-                    className="flex items-center justify-center gap-1
-                               border border-indigo-600 bg-indigo-600 text-white
-                               text-xs font-semibold px-3 py-2 rounded-md
-                               hover:bg-indigo-500 transition"
-                  >
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>

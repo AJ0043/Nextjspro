@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Heart, ShoppingCart, Eye, Layers } from "lucide-react";
+import { Heart, Eye, Layers } from "lucide-react";
 
 /* ================= TYPES ================= */
 type ImageObj = { url: string };
@@ -50,7 +50,6 @@ export default function CargoProductsPage() {
   /* FILTER STATES */
   const [priceRange, setPriceRange] =
     useState<{ label: string; min: number; max: number } | null>(null);
-
   const [selectedType, setSelectedType] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
@@ -62,7 +61,7 @@ export default function CargoProductsPage() {
       const res = await axios.get("/api/products");
 
       const cargoProducts = res.data.products.filter(
-        (p: ProductType) => p.category?.title === "Cargo"
+        (p: ProductType) => p.category?.title.toLowerCase() === "cargo"
       );
 
       const withVariants = await Promise.all(
@@ -95,7 +94,7 @@ export default function CargoProductsPage() {
           return false;
       }
 
-      /* PRODUCT TYPE (joggers / pyjama / shirts / jeans / pants) */
+      /* PRODUCT TYPE */
       if (selectedType.length > 0) {
         const typeMatch = selectedType.some(
           (t) => title.includes(t) || slug.includes(t)
@@ -109,20 +108,17 @@ export default function CargoProductsPage() {
           title.includes("men") ||
           title.includes("mens") ||
           title.includes("gents");
-
         const isWomen =
           title.includes("women") ||
           title.includes("womens") ||
           title.includes("ladies");
-
         const genderMatch =
           (selectedGender.includes("men") && isMen) ||
           (selectedGender.includes("women") && isWomen);
-
         if (!genderMatch) return false;
       }
 
-      /* COLOR (VARIANT + TITLE + SLUG) */
+      /* COLOR */
       if (selectedColors.length > 0) {
         const colorInVariant =
           p.variants?.some((v) =>
@@ -144,7 +140,6 @@ export default function CargoProductsPage() {
           p.variants?.some((v) =>
             selectedSizes.includes(v.size?.toLowerCase() || "")
           ) ?? false;
-
         if (!sizeMatch) return false;
       }
 
@@ -187,6 +182,12 @@ export default function CargoProductsPage() {
               {r.label}
             </button>
           ))}
+          <button
+            onClick={() => setPriceRange(null)}
+            className="text-xs text-red-500 mt-2"
+          >
+            Clear Price
+          </button>
         </div>
       </aside>
 
@@ -214,18 +215,21 @@ export default function CargoProductsPage() {
                   <span className="text-green-700 font-bold text-base">₹{p.finalPrice}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <Link href={`/products/${p.slug}`} className="bg-purple-500 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
+                {/* ================= BUTTONS ================= */}
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Link
+                    href={`/products/${p.slug}`}
+                    className="bg-purple-500 text-white text-xs py-2 px-2 rounded flex items-center justify-center gap-1 hover:bg-purple-600 transition"
+                  >
                     <Eye size={14} /> View
                   </Link>
 
-                  <Link href={`/products/${p.slug}?variants=true`} className="bg-green-300 text-xs py-2 rounded flex items-center justify-center gap-1">
+                  <Link
+                    href={`/products/${p.slug}?variants=true`}
+                    className="bg-green-400 text-white text-xs py-2 px-2 rounded flex items-center justify-center gap-1 hover:bg-green-500 transition"
+                  >
                     <Layers size={14} /> Variant
                   </Link>
-
-                  <button className="bg-indigo-600 text-white text-xs py-2 rounded flex items-center justify-center gap-1">
-                    <ShoppingCart size={14} /> Buy
-                  </button>
                 </div>
               </div>
             </div>
@@ -242,7 +246,7 @@ function FilterSection({ title, values, selected, setSelected }: any) {
     <div className="mb-4">
       <p className="font-semibold mb-2">{title}</p>
       {values.map((v: string) => (
-        <label key={v} className="flex gap-2 text-sm mb-1">
+        <label key={v} className="flex gap-2 text-sm mb-1 cursor-pointer items-center">
           <input
             type="checkbox"
             checked={selected.includes(v)}
@@ -253,6 +257,7 @@ function FilterSection({ title, values, selected, setSelected }: any) {
                   : [...prev, v]
               )
             }
+            className="accent-purple-600"
           />
           {v.toUpperCase()}
         </label>
