@@ -279,6 +279,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="font-medium text-lg hidden sm:block">
               {user ? `Welcome, ${user.name}` : "Admin Dashboard"}
             </span>
+            {/* ✅ GO TO YOUR WEBSITE */}
+    <Link
+      href="/website"
+      target="_blank"
+      className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md
+                 border border-purple-600 text-purple-600
+                 hover:bg-purple-600 hover:text-white transition"
+    >
+      🌐 Go to Your Website
+    </Link>
+          
           </div>
 
           <div className="flex items-center gap-4">
