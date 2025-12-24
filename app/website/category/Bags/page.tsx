@@ -28,7 +28,7 @@ type ProductType = {
   variants?: Variant[];
 };
 
-/* ================= FILTER DATA (BAGS) ================= */
+/* ================= FILTER DATA ================= */
 const BAG_TYPES = [
   "trolley",
   "backpack",
@@ -45,6 +45,8 @@ const BAG_BRANDS = [
   "vip",
   "safari",
   "tommy hilfiger",
+  "eume",
+  "reebow",
 ];
 
 const BAG_SIZES = ["small", "medium", "large", "cabin", "checkin"];
@@ -75,7 +77,8 @@ export default function BagsProductsPage() {
       const res = await axios.get("/api/products");
 
       const bags = res.data.products.filter(
-        (p: ProductType) => p.category?.title === "Lugagebags"
+        (p: ProductType) =>
+          p.category?.title?.toLowerCase() === "lugagebags"
       );
 
       setProducts(bags);
@@ -88,11 +91,20 @@ export default function BagsProductsPage() {
   /* ================= FILTER LOGIC ================= */
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const text = `${p.title} ${p.slug}`.toLowerCase();
+      const searchableText = `
+        ${p.title}
+        ${p.slug}
+        ${p.category?.title || ""}
+      `.toLowerCase();
 
-      if (types.length && !types.some((t) => text.includes(t))) return false;
-      if (brands.length && !brands.some((b) => text.includes(b))) return false;
-      if (sizes.length && !sizes.some((s) => text.includes(s))) return false;
+      if (types.length && !types.some((t) => searchableText.includes(t)))
+        return false;
+
+      if (brands.length && !brands.some((b) => searchableText.includes(b)))
+        return false;
+
+      if (sizes.length && !sizes.some((s) => searchableText.includes(s)))
+        return false;
 
       if (priceRange) {
         if (p.finalPrice < priceRange.min || p.finalPrice > priceRange.max)
@@ -110,7 +122,8 @@ export default function BagsProductsPage() {
     );
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading)
+    return <div className="p-6 text-center">Loading bags...</div>;
 
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
@@ -160,11 +173,11 @@ export default function BagsProductsPage() {
               {/* IMAGE */}
               <div className="relative h-52 bg-gray-100">
                 <img
-                  src={p.images?.[0]?.url}
+                  src={p.images?.[0]?.url || "/placeholder.png"}
+                  alt={p.title}
                   className="h-full w-full object-contain"
                 />
 
-                {/* ❤️ HEART */}
                 <button
                   onClick={() => toggleWishlist(p._id)}
                   className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
@@ -193,36 +206,53 @@ export default function BagsProductsPage() {
                   </span>
                 </div>
 
-                {/* ACTION BUTTONS */}
                 <div className="grid grid-cols-3 gap-2 pt-2">
                   <Link
-                    href={`/products/${p.slug}`}
-                    className="flex items-center justify-center gap-1
-                    border border-blue-500 text-blue-600
-                    text-xs font-semibold px-3 py-2 rounded-md
-                    hover:bg-blue-500 hover:text-white transition"
+                   href={`/products/${p.slug}`}
+                   className="
+                    flex items-center justify-center gap-1
+                    bg-blue-600 text-white
+                    text-[11px] font-semibold
+                    px-2 py-2
+                    rounded-sm
+                    hover:bg-blue-700
+                    transition
+                    
+                  "
                   >
-                    <Eye size={14} /> View
+                   <Eye size={12} /> View
                   </Link>
 
                   <Link
                     href={`/products/${p.slug}?variants=true`}
-                    className="flex items-center justify-center gap-1
-                    border border-green-500 text-green-600
-                    text-xs font-semibold px-3 py-2 rounded-md
-                    hover:bg-green-500 hover:text-white transition"
-                  >
-                    <Layers size={14} /> Variant
+                     className="
+                     flex items-center justify-center gap-1
+                     bg-green-600 text-white
+                      text-[11px] font-semibold
+                       px-2 py-1
+                      rounded-sm
+                      hover:bg-green-700
+                      transition
+                      "
+                    >
+                    <Layers size={12} /> Variant
                   </Link>
 
-                  <button
-                    className="flex items-center justify-center gap-1
-                    border border-indigo-600 bg-indigo-600 text-white
-                    text-xs font-semibold px-3 py-2 rounded-md
-                    hover:bg-indigo-500 transition"
-                  >
-                    <ShoppingCart size={14} /> Buy
-                  </button>
+
+                 <button
+                  className="
+                    flex items-center justify-center gap-1
+                    bg-indigo-600 text-white
+                    text-[11px] font-semibold
+                    px-2 py-1
+                    rounded-sm
+                    hover:bg-indigo-700
+                    transition
+                  "
+                >
+                 <ShoppingCart size={12} /> Buy
+              </button>
+
                 </div>
               </div>
             </div>
@@ -234,11 +264,21 @@ export default function BagsProductsPage() {
 }
 
 /* ================= FILTER COMPONENT ================= */
-function Filter({ title, values, selected, setSelected }: any) {
+function Filter({
+  title,
+  values,
+  selected,
+  setSelected,
+}: {
+  title: string;
+  values: string[];
+  selected: string[];
+  setSelected: Function;
+}) {
   return (
     <div className="mb-4">
       <p className="font-semibold mb-2 text-blue-500">{title}</p>
-      {values.map((v: string) => (
+      {values.map((v) => (
         <label key={v} className="flex gap-2 text-sm mb-1 items-center">
           <input
             type="checkbox"

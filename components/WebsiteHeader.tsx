@@ -37,6 +37,7 @@ export default function Header() {
 
   const navLinks = [
     { label: "Home", href: "http://localhost:3000/website" },
+    { label: "About", href: "/website/category/About" },
     { label: "Cargo", href: "/website/category/Cargo" },
     { label: "Watch", href: "/website/category/Watch" },
     { label: "Women", href: "/website/category/Women" },
@@ -44,12 +45,11 @@ export default function Header() {
     { label: "Mens", href: "/website/category/Men" },
     { label: "Electronics", href: "/website/category/electronics" },
     { label: "LuggageBags", href: "/website/category/Bags" },
-    { label: "KitchenWare", href: "/website/category/Kitchenware" },
-    { label: "Shoes", href: "/website/category/Shoes" },
+    { label: "Shoes", href: "/website/category/shoes" },
     { label: "Cap", href: "/website/category/Cap" },
     { label: "Sports", href: "/website/category/sports" },
     { label: "NewProduct", href: "/website/category/NewProducts" },
-    { label: "About", href: "/website/category/abouts" },
+    
   ];
 
   /* ================= FETCH USER ================= */
