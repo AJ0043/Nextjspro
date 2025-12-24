@@ -12,8 +12,6 @@ import {
   LogIn,
   ChevronDown,
   LayoutDashboard,
-  Home,
-  Info,
   Star,
 } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +34,7 @@ export default function Header() {
   const [cartCount] = useState(3); // demo
 
   const navLinks = [
-    { label: "Home", href: "http://localhost:3000/website" },
+    { label: "Home", href: "/website" },
     { label: "About", href: "/website/category/About" },
     { label: "Cargo", href: "/website/category/Cargo" },
     { label: "Watch", href: "/website/category/Watch" },
@@ -47,9 +45,8 @@ export default function Header() {
     { label: "LuggageBags", href: "/website/category/Bags" },
     { label: "Shoes", href: "/website/category/shoes" },
     { label: "Cap", href: "/website/category/Cap" },
-    { label: "Sports", href: "/website/category/sports" },
+    { label: "Sports", href: "/website/category/Sports" },
     { label: "NewProduct", href: "/website/category/NewProducts" },
-    
   ];
 
   /* ================= FETCH USER ================= */
@@ -72,6 +69,29 @@ export default function Header() {
     router.push("/auth/login");
   };
 
+  /* ================= SEARCH HANDLER ================= */
+  const handleSearch = (e?: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!search.trim()) return;
+
+    // Trigger on Enter key or on button click
+    if (!e || e.key === "Enter") {
+      // Find exact match (case-insensitive)
+      const match = navLinks.find(
+        (link) => link.label.toLowerCase() === search.trim().toLowerCase()
+      );
+
+      if (match) {
+        router.push(match.href); // redirect to category page
+      } else {
+        // If no match, redirect to search page
+        router.push(`/website/search?query=${encodeURIComponent(search)}`);
+      }
+
+      setSearch("");
+      setMenuOpen(false);
+    }
+  };
+
   return (
     <>
       {/* ================= HEADER ================= */}
@@ -88,11 +108,12 @@ export default function Header() {
             <Image src="/estore.webp" alt="E-Store" width={110} height={110} />
           </Link>
 
-          {/* SEARCH */}
+          {/* SEARCH DESKTOP */}
           <div className="hidden md:flex flex-1 max-w-xl">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearch}
               placeholder="Search products..."
               className="w-full px-5 py-3 border rounded-full"
             />
@@ -190,11 +211,12 @@ export default function Header() {
             <X onClick={() => setMenuOpen(false)} className="cursor-pointer" />
           </div>
 
-          {/* SEARCH */}
+          {/* SEARCH MOBILE */}
           <div className="p-4 border-b">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearch}
               placeholder="Search products..."
               className="w-full px-4 py-2 border rounded"
             />
